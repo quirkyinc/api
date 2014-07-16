@@ -9,9 +9,6 @@ module QuirkyApi
       if base.respond_to?(:skip_before_filter) &&
          base.respond_to?(:before_filter)
 
-        # Skip all before_filters.  The API is a separate entity.
-        base.send :skip_filter, *_process_action_callbacks.map(&:filter)
-
         # error_check allows mobile to send fake error codes.
         base.send :before_filter, :raise_error_check
 
