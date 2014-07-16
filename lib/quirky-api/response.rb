@@ -121,7 +121,8 @@ module QuirkyApi
 
       options[:flatten] = true unless data.is_a?(Array) || data.is_a?(Hash)
 
-      warn 'DEPRECATION WARNING: respond_as_json is deprecated.  Use respond_with instead.', caller[0]
+      warn 'DEPRECATION WARNING: respond_as_json is deprecated.' \
+           'Use respond_with instead.', caller[0]
 
       response = get_cache_data(data, options)
       render json: response, status: 200
@@ -168,7 +169,6 @@ module QuirkyApi
       end
     end
 
-
     # Default options for pagination.
     def pagination_options
       {
@@ -177,7 +177,6 @@ module QuirkyApi
         order: params[:order]
       }
     end
-
 
     def excludeable(key)
       yield unless (params['exclude'] || []).include? key

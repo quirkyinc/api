@@ -53,6 +53,5 @@ module QuirkyApi
         ios_header <= version.to_s
       end
     end
-
   end
 end
