@@ -1,4 +1,9 @@
+# encoding: utf-8
+
 module QuirkyApi
+  # The Rescue module rescues certain exceptions and returns their responses
+  # in a JSON response.  If +QuirkyApi.show_exceptions+ is specified, all
+  # exceptions will raise as normal.
   module Rescue
     def self.included(base)
       if base.respond_to?(:rescue_from) && !QuirkyApi.show_exceptions

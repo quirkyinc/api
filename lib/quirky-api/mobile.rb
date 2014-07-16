@@ -1,4 +1,8 @@
+# encoding: utf-8
+
 module QuirkyApi
+  # The Mobile module provides the functionality to test mobile requests and
+  # provide specific information about them.
   module Mobile
     # Returns whether the request is being sent from the Quirky app.
     # @return [Bool]

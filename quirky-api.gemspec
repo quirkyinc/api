@@ -1,4 +1,6 @@
-$:.push File.expand_path('../lib', __FILE__)
+# encoding: utf-8
+
+$LOAD_PATH.push File.expand_path('../lib', __FILE__)
 
 # Maintain your gem's version:
 require 'quirky-api/version'
@@ -11,7 +13,8 @@ Gem::Specification.new do |s|
   s.email       = ['platform@quirky.com', 'mchittenden@quirky.com']
   s.homepage    = 'https://www.quirky.com'
   s.summary     = 'Quirky API is a standard API used across Quirky domains.'
-  s.description = 'The Quirky API is used on both QTIP and QC to share information and provide standard functionality.'
+  s.description = 'The Quirky API is used on both QTIP and QC to share ' \
+                  'information and provide standard functionality.'
 
   s.files = Dir['{app,config,db,lib}/**/*', 'Rakefile', 'README.rdoc']
 
