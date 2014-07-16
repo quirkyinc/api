@@ -271,3 +271,43 @@ Or as an optional parameter in `respond_with`:
 ```ruby
 respond_with User.all, extra_fields: ['town', 'age']
 ```
+
+## Serializing data
+
+To serialize data, you need to use the serializers that are described above.  Remember that `respond_with` will attempt to serialize data automatically, but in cases where you want to do it on your own, use serializers.
+
+### Individual object serialization
+
+Say you wanted to serialize a single user:
+
+```ruby
+@user = UserSerializer.new(User.first).as_json(root: false)
+```
+
+Notice that we use `as_json` to return a Ruby hash of the serialized data.  You may also use `to_json` to return a JSON string.
+
+Individual serializers also accept optional second parameters in exactly the same way that `respond_with` does.  This will allow you to request associations or optional fields, or even ask for specific fields.
+
+```ruby
+@user = UserSerializer.new(User.first, associations: [:profile], extra_fields: [:town]).as_json(root: false)
+```
+
+If you wish to ask for only specific fields, use the `only` parameter:
+
+```ruby
+@user = UserSerializer.new(User.first, only: [:id, :name]).as_json(root: false)
+```
+
+### Array serialization
+
+If you wish to serialize an array of data, use `QuirkyArraySerializer`.
+
+```ruby
+@user = QuirkyArraySerializer.new(User.all).as_json(root: false)
+```
+
+The same options that apply to object serialization apply to `QuirkyArraySerializer`.  `QuirkyArraySerializer` will attempt to find a serializer for every item in the array, and serialize that item with that serializer.
+
+```ruby
+@user = QuirkyArraySerializer.new(User.all, only: [:id, :name]).as_json(root: false)
+```
