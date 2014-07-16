@@ -130,7 +130,7 @@ class QuirkySerializer < ActiveModel::Serializer
 
       # Find any invalid fields and add a message.
       bad = bad_fields.reduce([]) do |w, f|
-        w << I18n.t('api.generic.errors.optional-field-invalid', field: f)
+        w << "The '#{f}' field is not a valid optional field"
       end if good_fields.blank? || good_fields.length != req_fields.length
 
       # Return the warnings.
@@ -256,7 +256,7 @@ class QuirkySerializer < ActiveModel::Serializer
     if returned.blank? || returned.length != [*options[:associations]].length
       ([*options[:associations]].map(&:to_sym) - @associations).each do |assoc|
         fail InvalidAssociation,
-             I18n.t('api.generic.errors.association-invalid', assoc: assoc)
+             "The '#{assoc}' association does not exist."
       end
     end
 
@@ -283,7 +283,7 @@ class QuirkySerializer < ActiveModel::Serializer
     else
       if QuirkyApi.validate_associations
         fail InvalidAssociation,
-             I18n.t('api.generic.errors.association-invalid', assoc: data)
+             "The '#{data}' association does not exist."
       else
         return
       end
