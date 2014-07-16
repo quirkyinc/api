@@ -167,6 +167,7 @@ class ModelNameSerializer < QuirkySerializer
   optional :town, :age
 
   def fav_animal
+    # This overrides the default avlue of fav_animal.
     'Giraffe'
   end
 
