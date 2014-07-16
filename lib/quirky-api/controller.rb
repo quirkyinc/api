@@ -18,5 +18,6 @@ module QuirkyApi
     include QuirkyApi::Session
     include QuirkyApi::Mobile
     include QuirkyApi::Response
+    include QuirkyApi::Can
   end
 end

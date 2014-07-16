@@ -7,6 +7,7 @@ require 'quirky-api/bouncer'
 require 'quirky-api/session'
 require 'quirky-api/mobile'
 require 'quirky-api/response'
+require 'quirky-api/can'
 require 'quirky-api/controller'
 
 # Serializers
