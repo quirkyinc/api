@@ -28,7 +28,7 @@ Always use `respond_with` to render your content.
 ```ruby
 module Api
   module V1
-    class TestController < Quirky::Base
+    class TestController < QuirkyApi::Base
       def index
         respond_with Test.paginate(page: 1 || params[:page], per_page: 15 || params[:per_page])
       end
