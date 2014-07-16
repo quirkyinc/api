@@ -18,9 +18,9 @@ Gem::Specification.new do |s|
 
   s.files = Dir['{app,config,db,lib}/**/*', 'Rakefile', 'README.rdoc']
 
-  s.add_dependency 'rails-api'
-  s.add_dependency 'active_model_serializers'
+  s.add_dependency 'rails-api', '0.2.1'
+  s.add_dependency 'active_model_serializers', '0.8.1'
 
-  s.add_development_dependency 'yard'
-  s.add_development_dependency 'sqlite3'
+  s.add_development_dependency 'yard', '0.8.7.4'
+  s.add_development_dependency 'sqlite3', '1.3.9'
 end
