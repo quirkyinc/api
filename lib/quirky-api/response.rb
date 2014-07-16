@@ -121,8 +121,8 @@ module QuirkyApi
 
       options[:flatten] = true unless data.is_a?(Array) || data.is_a?(Hash)
 
-      warn 'DEPRECATION WARNING: respond_as_json is deprecated.' \
-           'Use respond_with instead.', caller[0]
+      warn 'DEPRECATION WARNING: respond_as_json is deprecated.  ' \
+           'Use respond_with instead.'
 
       response = get_cache_data(data, options)
       render json: response, status: 200
