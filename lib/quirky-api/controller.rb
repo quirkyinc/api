@@ -19,5 +19,9 @@ module QuirkyApi
     include QuirkyApi::Mobile
     include QuirkyApi::Response
     include QuirkyApi::Can
+
+    def self.inherited(base)
+      base.send(:include, QuirkyApi.auth_system)
+    end
   end
 end
