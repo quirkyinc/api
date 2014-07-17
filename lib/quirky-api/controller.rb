@@ -1,6 +1,8 @@
 # encoding: utf-8
 
 module QuirkyApi
+  require 'will_paginate'
+
   # The base class provides the standard functionality that every API requires.
   # Inherit your contorller from QuirkyApi::Base to include the functionality.
   #
