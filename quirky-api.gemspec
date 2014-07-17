@@ -20,7 +20,4 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'rails-api', '0.2.1'
   s.add_dependency 'active_model_serializers', '0.8.1'
-
-  s.add_development_dependency 'yard', '0.8.7.4'
-  s.add_development_dependency 'sqlite3', '1.3.9'
 end

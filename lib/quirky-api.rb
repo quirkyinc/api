@@ -1,5 +1,13 @@
 # encoding: utf-8
 
+
+# Exception for associations that are not valid.
+class InvalidAssociation < ::Exception ; end
+
+# Dependencies
+require 'rails-api/action_controller/api'
+require 'active_model_serializers'
+
 # Core QuirkyApi modules
 require 'quirky-api/configurable'
 require 'quirky-api/rescue'

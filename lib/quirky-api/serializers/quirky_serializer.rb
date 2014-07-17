@@ -1,10 +1,5 @@
 # encoding: utf-8
 
-require 'active_model_serializers'
-
-# Exception for associations that are not valid.
-class InvalidAssociation < Exception ; end
-
 # QuirkySerializer is Quirky's base serializer, providing functionality
 # that inherits from and extends ActiveModel::Serializers.  All serializers
 # that inherit from QuirkySerializer will receive the following (new)
@@ -26,7 +21,7 @@ class InvalidAssociation < Exception ; end
 #     associations :avatar
 #   end
 #
-class QuirkySerializer < ActiveModel::Serializer
+class QuirkySerializer < ::ActiveModel::Serializer
   class << self
     attr_accessor :_optional_fields, :_associations,
                   :_default_associations, :_options

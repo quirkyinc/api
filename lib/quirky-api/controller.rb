@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-require 'rails-api/action_controller/api'
-
 module QuirkyApi
   # The base class provides the standard functionality that every API requires.
   # Inherit your contorller from QuirkyApi::Base to include the functionality.
@@ -11,8 +9,6 @@ module QuirkyApi
   #    # Intentionally left blank
   #  end
   class Base < ActionController::API
-    require 'active_model_serializers'
-
     include QuirkyApi::Rescue
     include QuirkyApi::Bouncer
     include QuirkyApi::Session
@@ -21,7 +17,7 @@ module QuirkyApi
     include QuirkyApi::Can
 
     def self.inherited(base)
-      base.send(:include, QuirkyApi.auth_system)
+      base.send(:include, ::QuirkyAuth::Authorization)
     end
   end
 end
