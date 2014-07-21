@@ -256,7 +256,7 @@ module QuirkyApi
 
       errors.each_with_object({}) do |(key, error), hsh|
         # Some nested attributes get a weird dot syntax.
-        key = key.split('.').last if key.match(/\./)
+        key = key.to_s.split('.').last if key.match(/\./)
 
         # Retrieves the full error and cleans it as necessary.
         full_message = if key.to_s == 'base'
