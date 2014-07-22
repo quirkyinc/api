@@ -11,6 +11,8 @@ module QuirkyApi
   #    # Intentionally left blank
   #  end
   class Base < ActionController::API
+    include ActionController::Cookies
+
     include QuirkyApi::Rescue
     include QuirkyApi::Bouncer
     include QuirkyApi::Session
