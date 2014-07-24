@@ -5,7 +5,6 @@
 class InvalidAssociation < ::Exception ; end
 
 # Dependencies
-require 'rails-api/action_controller/api'
 require 'active_model_serializers'
 
 # Core QuirkyApi modules

@@ -10,7 +10,7 @@ module QuirkyApi
   #  class Api::V1::InventionsController < QuirkyApi::Base
   #    # Intentionally left blank
   #  end
-  class Base < ActionController::API
+  class Base < ActionController::Base
     include ActionController::Cookies
 
     include QuirkyApi::Rescue
