@@ -21,7 +21,7 @@ module QuirkyApi
     include QuirkyApi::Can
 
     def self.inherited(base)
-      base.send(:include, ::QuirkyAuth::Authorization)
+      base.send(:include, ::QuirkyApi.auth_system) if QuirkyApi.auth_system.is_a?(Module)
     end
   end
 end
