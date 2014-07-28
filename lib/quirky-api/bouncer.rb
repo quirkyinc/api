@@ -12,8 +12,10 @@ module QuirkyApi
         # error_check allows mobile to send fake error codes.
         base.send :before_filter, :raise_error_check
 
+        base.send :skip_before_filter, :verify_authenticity_token
+
         # Double checks the API token.
-        base.send :before_filter, :valid_api_credentials?
+        # base.send :before_filter, :valid_api_credentials?
       end
     end
 
