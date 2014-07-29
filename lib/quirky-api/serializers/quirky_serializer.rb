@@ -293,7 +293,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
 
     if data.is_a?(Array)
       QuirkyArraySerializer.new(data, options).as_json(root: false)
-    elsif data.try(:active_model_serializer).present?
+    elsif data.respond_to?(:active_model_serializer) && data.try(:active_model_serializer).present?
       data.active_model_serializer.new(data, options).as_json(root: false)
     else
       data.as_json(root: false)
