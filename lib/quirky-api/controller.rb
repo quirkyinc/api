@@ -23,6 +23,7 @@ module QuirkyApi
     def self.inherited(base)
       base.send(:include, ::QuirkyApi.auth_system) if QuirkyApi.auth_system.is_a?(Module)
       base.send(:include, ::ApplicationHelper)
+      base.send(:include, ::Rails.application.routes.url_helpers)
     end
   end
 end
