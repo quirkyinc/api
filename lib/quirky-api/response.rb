@@ -59,7 +59,6 @@ module QuirkyApi
       renderable = { json: data }
       renderable[:status] = options[:status] if options[:status].present?
 
-
       render renderable
     end
 

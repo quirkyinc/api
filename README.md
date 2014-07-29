@@ -5,7 +5,7 @@ The Quirky API gem provides the base functionality for API usage across all Quir
 All functionality will automatically be included by adding the `quirky-api` gem to your Gemfile:
 
 ```ruby
-gem 'quirky-api', '0.2.0'
+gem 'quirky-api', '0.2.9'
 ```
 
 ## Usage
@@ -173,9 +173,9 @@ class ModelNameSerializer < QuirkySerializer
 
   def age
     # Use object to reference the model.
-    if object.age > 20 && object.age < 40
+    if object.age > 20 && object.age < 50
       'Young'
-    elsif object.age > 40
+    elsif object.age > 50
       'Old'
     else
       'Really young'
