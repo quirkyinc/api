@@ -41,7 +41,9 @@ module QuirkyApi
       # Otherwise, just render what we've got.
       data = if response.respond_to?(:active_model_serializer) &&
                 response.try(:active_model_serializer).present?
+
                options[:params] = params
+               options[:current_user] = current_user
 
                serializer = response.active_model_serializer
                if serializer <= ActiveModel::ArraySerializer

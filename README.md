@@ -5,7 +5,7 @@ The Quirky API gem provides the base functionality for API usage across all Quir
 All functionality will automatically be included by adding the `quirky-api` gem to your Gemfile:
 
 ```ruby
-gem 'quirky-api', '0.2.9'
+gem 'quirky-api', '0.2.12'
 ```
 
 ## Usage

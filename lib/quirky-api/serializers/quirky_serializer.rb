@@ -133,11 +133,12 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
-  attr_accessor :params, :options
+  attr_accessor :params, :options, :current_user
   def initialize(object, options = {})
     # Ensure that we're passing around parameters and options.
     @params = options[:params] || {}
     @options = options
+    @current_user = options[:current_user]
 
     # Give the class access to the options too.
     self.class._options = options
