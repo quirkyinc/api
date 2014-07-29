@@ -9,12 +9,18 @@ module QuirkyApi
 
     # Stub for logged_in? method, to be obtained by the parent app.
     def logged_in?
-      Object.respond_to?(:current_user) ? current_user.present? : false
+      defined? current_user && current_user.present?
     end
 
     # Returns a a 401 unauthorized response.
     def requires_login
-      respond_unauthorized
+      respond_unauthorized unless logged_in?
     end
+    alias_method :require_login, :requires_login
+
+    def requires_admin
+      respond_forbidden unless current_user && current_user.is_admin?
+    end
+    alias_method :require_admin, :requires_admin
   end
 end

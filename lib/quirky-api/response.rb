@@ -207,14 +207,6 @@ module QuirkyApi
       respond_bad_request_with_errors(e.record.errors)
     end
 
-    def require_admin
-      respond_forbidden unless current_user && current_user.is_admin?
-    end
-
-    def require_login
-      respond_unauthorized unless logged_in?
-    end
-
     def respond_forbidden
       render nothing: true, status: 403
       @performed_render = true
