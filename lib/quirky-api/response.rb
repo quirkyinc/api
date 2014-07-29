@@ -42,7 +42,13 @@ module QuirkyApi
       data = if response.respond_to?(:active_model_serializer) &&
                 response.try(:active_model_serializer).present?
                options[:params] = params
-               @res = response.active_model_serializer.new(response, options)
+
+               serializer = response.active_model_serializer
+               if serializer <= ActiveModel::ArraySerializer
+                 serializer = QuirkyArraySerializer
+               end
+
+               @res = serializer.new(response, options)
                { data: @res.as_json(root: false) }
              else
                { data: response }

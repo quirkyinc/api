@@ -28,6 +28,10 @@ class QuirkyArraySerializer < ::ActiveModel::ArraySerializer
     data
   end
 
+  def warnings(params)
+    QuirkySerializer.warnings(params)
+  end
+
   class << self
     def get_serializer(key)
       if key.class <= Paperclip::Attachment
