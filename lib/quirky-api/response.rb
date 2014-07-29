@@ -178,8 +178,7 @@ module QuirkyApi
     def pagination_options
       {
         per_page: params[:per_page] || 10,
-        page: params[:page] || 1,
-        order: params[:order]
+        page: params[:page] || 1
       }
     end
 
