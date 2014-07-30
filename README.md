@@ -153,6 +153,40 @@ respond_with User.first, elements: { status: 'success' }
 
 Both `elements` and `status` may be combined.
 
+## `respond_with` second parameter options
+
+Here are all of the available second parameter options to `respond_with`.  All are optional:
+
+- `status` will change the status of the response.  This must be a valid status code.
+
+  ```ruby
+  respond_with @user, status: 201
+  ```
+
+- `associations` must be an array and will automatically include the specified associations in the response.
+
+  ```ruby
+  respond_with @user, associations: [:profile]
+  ```
+
+- `extra_fields` must be an array and will automatically include the specified optional fields in the response.
+
+  ```ruby
+  respond_with @user, extra_fields: [:town, :favorite_color]
+  ```
+
+- `only` must be an array and will return *only* the specified fields.
+
+  ```ruby
+  respond_with @user, only: [:id, :name]
+  ```
+
+- `exclude` must be an array and will *exclude* the specified fields from the request.
+
+  ```ruby
+  respond_with @user, exclude: [:last_name]
+  ```
+
 ## Serializers
 
 The Quirky API gem exposes a slightly altered instance of ActiveModel Serializers.  AMS serializes data and returns only what you want to return.
