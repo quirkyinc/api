@@ -10,7 +10,28 @@ module QuirkyApi
   #  class Api::V1::InventionsController < QuirkyApi::Base
   #    # Intentionally left blank
   #  end
-  class Base < ActionController::Base
+  class Base < ActionController::Metal
+    include AbstractController::Rendering
+    include ActionController::Rendering
+    include ActionController::Renderers::All
+    include ActionController::MimeResponds
+    include ActionController::ImplicitRender
+    include AbstractController::Callbacks
+    include ActionController::Helpers
+    include ActionController::Rescue
+    include ActiveSupport::Rescuable
+    # include ActionController::Redirecting
+    # include ActionController::Renderers::All
+    # include ActionController::ConditionalGet
+    # include ActionController::MimeResponds
+    # include ActionController::RequestForgeryProtection
+    # include ActionController::ForceSSL
+    # include AbstractController::Callbacks
+    # include ActionController::Instrumentation
+    # include ActionController::ParamsWrapper
+    # include ActionController::Rendering
+    # include AbstractController::Rendering
+
     include ActionController::Cookies
 
     include QuirkyApi::Rescue
