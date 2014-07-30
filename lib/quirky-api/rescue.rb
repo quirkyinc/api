@@ -3,7 +3,7 @@
 module QuirkyApi
   # The Rescue module rescues certain exceptions and returns their responses
   # in a JSON response.  If +QuirkyApi.show_exceptions+ is specified, all
-  # exceptions will raise as normal.
+  # of the rescued exceptions below will not be rescued, and will raise.
   module Rescue
     def self.included(base)
       if base.respond_to?(:rescue_from) && !QuirkyApi.show_exceptions
