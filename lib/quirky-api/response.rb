@@ -43,7 +43,7 @@ module QuirkyApi
                 response.try(:active_model_serializer).present?
 
                options[:params] = params
-               options[:current_user] = current_user
+               options[:current_user] = current_user if defined? current_user
 
                serializer = response.active_model_serializer
                if serializer <= ActiveModel::ArraySerializer
