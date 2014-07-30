@@ -187,6 +187,14 @@ Here are all of the available second parameter options to `respond_with`.  All a
   respond_with @user, exclude: [:last_name]
   ```
 
+- `elements` allows you to set root-level keys and their values.  These will *not* fall under the `data` key.
+
+  ```ruby
+  respond_with @user, elementes: { status: 'success' }
+  ```
+
+All of the above may be combined, mixed and matched, or not used at all.
+
 ## Serializers
 
 The Quirky API gem exposes a slightly altered instance of ActiveModel Serializers.  AMS serializes data and returns only what you want to return.
