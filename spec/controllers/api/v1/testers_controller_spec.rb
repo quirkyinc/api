@@ -214,10 +214,10 @@ describe Api::V1::TestersController, type: :controller do
         data: [
           {
             id: 1
-          },
+          }.merge(product_serialized),
           {
             id: 2
-          }
+          }.merge(product_serialized)
         ]
       }.to_json)
     end
@@ -228,10 +228,10 @@ describe Api::V1::TestersController, type: :controller do
         data: [
           {
             name: 'Mike'
-          },
+          }.merge(product_serialized),
           {
             name: 'Tom'
-          }
+          }.merge(product_serialized)
         ]
       }.to_json)
     end

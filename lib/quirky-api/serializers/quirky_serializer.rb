@@ -22,6 +22,8 @@
 #   end
 #
 class QuirkySerializer < ::ActiveModel::Serializer
+  unloadable
+
   class << self
     attr_accessor :_optional_fields, :_associations,
                   :_default_associations, :_options
@@ -135,6 +137,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
 
   attr_accessor :params, :options, :current_user
   def initialize(object, options = {})
+    Rails.logger.info "Called for #{object}"
     # Ensure that we're passing around parameters and options.
     @params = options[:params] || {}
     @options = options
@@ -343,13 +346,13 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @see get_association
   # @return [Array] an array of fields, associations and optional fields.
   def sub_request_fields(key)
-    return unless @params[key + '_fields'].present? ||
-                  @params[key + '_associations'].present? ||
-                  @params[key + '_extra_fields'].present?
+    return unless @options[:"#{key}_fields"].present? ||
+                  @options[:"#{key}_associations"].present? ||
+                  @options[:"#{key}_extra_fields"].present?
 
-    sub_fields = [*@params[key + '_fields']]
-    sub_associations = [*@params[key + '_associations']]
-    sub_opt_fields = [*@params[key + '_extra_fields']]
+    sub_fields = [*@options[:"#{key}_fields"]]
+    sub_associations = [*@options[:"#{key}_associations"]]
+    sub_opt_fields = [*@options[:"#{key}_extra_fields"]]
 
     [sub_fields, sub_associations, sub_opt_fields]
   end
