@@ -17,10 +17,12 @@ module QuirkyApi
       respond_unauthorized unless logged_in?
     end
     alias_method :require_login, :requires_login
+    alias_method :login_required, :requires_login
 
     def requires_admin
       respond_forbidden unless current_user && current_user.is_admin?
     end
     alias_method :require_admin, :requires_admin
+    alias_method :admin_required, :requires_admin
   end
 end
