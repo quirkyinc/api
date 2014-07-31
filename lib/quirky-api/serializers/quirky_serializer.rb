@@ -22,8 +22,6 @@
 #   end
 #
 class QuirkySerializer < ::ActiveModel::Serializer
-  unloadable
-
   class << self
     attr_accessor :_optional_fields, :_associations,
                   :_default_associations, :_options
@@ -137,7 +135,6 @@ class QuirkySerializer < ::ActiveModel::Serializer
 
   attr_accessor :params, :options, :current_user
   def initialize(object, options = {})
-    Rails.logger.info "Called for #{object}"
     # Ensure that we're passing around parameters and options.
     @params = options[:params] || {}
     @options = options
