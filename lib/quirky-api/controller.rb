@@ -35,7 +35,7 @@ module QuirkyApi
     include QuirkyApi::Response
     include QuirkyApi::Can
 
-    extend Apipie::DSL::Concern
+    extend Apipie::DSL::Concern if defined? Apipie
 
     def self.inherited(base)
       # Include the configured QuirkyApi.auth_system module in the inherited class.
