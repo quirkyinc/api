@@ -316,9 +316,25 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @param attrs [Array] All of the attributes we need values for.
   # @return [Hash] A hash of key / value pairs.
   def filter_attributes(attrs)
-    attrs.each_with_object({}) do |name, inst|
+    attributes = attrs.each_with_object({}) do |name, inst|
       inst[name] = send(name)
     end
+
+    optional_fields = _optional
+    if optional_fields.present?
+      optional_fields.each do |field|
+        attributes[field] = get_optional_field(field)
+      end
+    end
+
+    associated_fields = _associations
+    if associated_fields.present?
+      associated_fields.each do |assoc|
+        attributes[assoc] = get_association(assoc)
+      end
+    end
+
+    attributes
   end
 
   # Returns appropriate sub-fields, sub-associations and/or
