@@ -23,8 +23,9 @@ module QuirkyApi
     include ActionController::Helpers
     include ActionController::Rescue
     include ActionController::Caching
-    include ActionController::StrongParameters
+    include ActionController::StrongParameters if defined? ActionController::StrongParameters
     include ActionController::Cookies
+    include ActionController::Flash
 
     # API functionality.
     include QuirkyApi::Rescue
@@ -33,6 +34,8 @@ module QuirkyApi
     include QuirkyApi::Mobile
     include QuirkyApi::Response
     include QuirkyApi::Can
+
+    extend Apipie::DSL::Concern
 
     def self.inherited(base)
       # Include the configured QuirkyApi.auth_system module in the inherited class.

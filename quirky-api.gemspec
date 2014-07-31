@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'active_model_serializers', '0.8.1'
   s.add_dependency 'will_paginate', '3.0.5'
+  s.add_dependency 'apipie-rails'
 
   s.add_development_dependency 'rails', '4.1.4'
   s.add_development_dependency 'sqlite3'
