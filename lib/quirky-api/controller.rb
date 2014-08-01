@@ -28,9 +28,9 @@ module QuirkyApi
     include ActionController::Flash
 
     # API functionality.
+    include QuirkyApi::Session
     include QuirkyApi::Rescue
     include QuirkyApi::Bouncer
-    include QuirkyApi::Session
     include QuirkyApi::Mobile
     include QuirkyApi::Response
     include QuirkyApi::Can
