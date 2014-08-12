@@ -188,7 +188,7 @@ module QuirkyApi
       yield unless (params['exclude'] || []).include? key
     end
 
-    def sanitize(klass, params)
+    def sanitize_params(klass, params)
       sanitizer = Api::V2::Sanitizers::Sanitizer.get_sanitizer(klass)
       sanitizer.sanitize(params)
     end
