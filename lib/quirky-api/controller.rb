@@ -41,8 +41,12 @@ module QuirkyApi
       # Include the configured QuirkyApi.auth_system module in the inherited class.
       base.send(:include, ::QuirkyApi.auth_system) if QuirkyApi.auth_system.is_a?(Module)
 
-      # Include the base ApplicationHelper, if possible, in the API controller.
-      base.send(:include, ::ApplicationHelper) if defined? ::ApplicationHelper
+      begin
+        # Include the base ApplicationHelper, if possible, in the API controller.
+        base.send(:include, ::ApplicationHelper)
+      rescue NameError
+        # No ApplicationHelper.  No problem.
+      end
 
       # Include Rails routes helpers.
       base.send(:include, ::Rails.application.routes.url_helpers)
