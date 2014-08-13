@@ -291,6 +291,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     sub_options[:only] = sub_fields if sub_fields.present?
     sub_options[:associations] = sub_associations if sub_associations.present?
     sub_options[:extra_fields] = sub_opts if sub_opts.present?
+    sub_options[:current_user] = @current_user
 
     if data.is_a?(Array)
       QuirkyArraySerializer.new(data, sub_options).as_json(root: false)
