@@ -226,6 +226,22 @@ class QuirkySerializer < ::ActiveModel::Serializer
     self.class.warnings(params)
   end
 
+  # Returns the correct serializer for an object, or collection of objects
+  def self.get_serializer(object)
+    if object.respond_to?(:active_model_serializer) &&
+       object.try(:active_model_serializer).present?
+
+     serializer = object.active_model_serializer
+     if serializer <= ActiveModel::ArraySerializer
+       serializer = QuirkyArraySerializer
+     end
+
+     serializer
+   else
+     nil
+   end
+  end
+
   private
 
   # Returns requested optional fields that are also found in the serializer.

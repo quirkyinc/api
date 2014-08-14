@@ -34,6 +34,7 @@ module QuirkyApi
     include QuirkyApi::Mobile
     include QuirkyApi::Response
     include QuirkyApi::Can
+    include QuirkyApi::Global
 
     extend Apipie::DSL::Concern if defined? Apipie
 

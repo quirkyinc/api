@@ -1,11 +1,13 @@
 # encoding: utf-8
 
-
 # Exception for associations that are not valid.
 class InvalidAssociation < ::Exception ; end
 
 # Dependencies
 require 'active_model_serializers'
+
+require 'quirky-api/global_methods'
+include QuirkyApi::Global
 
 # Core QuirkyApi modules
 require 'quirky-api/configurable'
