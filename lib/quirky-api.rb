@@ -23,7 +23,9 @@ require 'quirky-api/controller'
 require 'quirky-api/serializers/quirky_serializer'
 require 'quirky-api/serializers/quirky_array_serializer'
 
+# Client
 require 'quirky-api/client/base'
+require 'quirky-api/railtie/railtie' if defined? Rails
 
 # The QuirkyApi module provides API functionality across Quirky apps.  With
 # the +quirky-api+ gem, your application is given access to authentication,
