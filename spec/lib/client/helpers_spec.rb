@@ -7,7 +7,7 @@ describe QuirkyApi::ClientHelpers do
   describe '#list' do
     it 'requests the index endpoint' do
       allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/', {}).and_return(true)
+      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/', params: {}).and_return(true)
 
       client.users.list
     end
@@ -20,7 +20,7 @@ describe QuirkyApi::ClientHelpers do
 
     it 'requests the show endpoint' do
       allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/1', {}).and_return(true)
+      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/1', params: {}).and_return(true)
 
       client.users.find(1)
     end
@@ -30,33 +30,31 @@ describe QuirkyApi::ClientHelpers do
     it 'errors if you do not specify params' do
       expect { client.users.create(nil) }.to raise_error(InvalidRequest)
       expect { client.users.create({}) }.to raise_error(InvalidRequest)
-      expect { client.users.create({body: 'hi'}) }.to raise_error(InvalidRequest)
     end
 
     it 'sends a post request' do
       allow_any_instance_of(QuirkyApi::User).to receive(:post).and_return true
       expect_any_instance_of(QuirkyApi::User).to receive(:post).with('/', params: { email: 'user@example.com', first_name: 'Bob', last_name: 'Mctestinstine' }).and_return(true)
 
-      client.users.create(params: { email: 'user@example.com', first_name: 'Bob', last_name: 'Mctestinstine' })
+      client.users.create(email: 'user@example.com', first_name: 'Bob', last_name: 'Mctestinstine')
     end
   end
 
   describe '#update' do
     it 'errors if you do not specify an id' do
-      expect { client.users.update(nil, { params: { email: 'test@example.com' }}) }.to raise_error(InvalidRequest)
+      expect { client.users.update(nil, email: 'test@example.com') }.to raise_error(InvalidRequest)
     end
 
     it 'errors if you do not specify params' do
       expect { client.users.update(1, nil) }.to raise_error(InvalidRequest)
       expect { client.users.update(1, {}) }.to raise_error(InvalidRequest)
-      expect { client.users.update(1, {body: 'hi'}) }.to raise_error(InvalidRequest)
     end
 
     it 'sends a put request' do
       allow_any_instance_of(QuirkyApi::User).to receive(:put).and_return true
       expect_any_instance_of(QuirkyApi::User).to receive(:put).with('/1', params: { email: 'test@example.com' }).and_return(true)
 
-      client.users.update(1, params: { email: 'test@example.com' })
+      client.users.update(1, email: 'test@example.com')
     end
   end
 
@@ -67,7 +65,7 @@ describe QuirkyApi::ClientHelpers do
 
     it 'sends a put request' do
       allow_any_instance_of(QuirkyApi::User).to receive(:delete).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:delete).with('/1', {}).and_return(true)
+      expect_any_instance_of(QuirkyApi::User).to receive(:delete).with('/1', params: {}).and_return(true)
 
       client.users.destroy(1)
     end
