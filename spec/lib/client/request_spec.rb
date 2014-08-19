@@ -39,7 +39,8 @@ describe QuirkyApi::Request do
   describe '#request' do
     it 'makes and parses a request' do
       allow_any_instance_of(QuirkyApi::Request).to receive(:build_opts).with('/auth', params: { email: 'test@example.com', pass: 'testing123' }).and_return(host: 'blah.com')
-      allow_any_instance_of(QuirkyApi::Request).to receive(:make_request).with(:get, host: 'blah.com').and_return('test')
+      r = double(:r, run: 'test')
+      allow_any_instance_of(QuirkyApi::Request).to receive(:make_request).with(:get, host: 'blah.com').and_return(r)
       allow_any_instance_of(QuirkyApi::Request).to receive(:parse_request).with('test').and_return(true)
 
       expect_any_instance_of(Object).to receive(:build_opts).with('/auth', { params: { email: 'test@example.com', pass: 'testing123' } }).and_return(host: 'blah.com')
