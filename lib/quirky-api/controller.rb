@@ -26,6 +26,7 @@ module QuirkyApi
     include ActionController::StrongParameters if defined? ActionController::StrongParameters
     include ActionController::Cookies
     include ActionController::Flash
+    include ActionController::Head
     include ActionController::HttpAuthentication::Basic::ControllerMethods
     include ActionController::HttpAuthentication::Token::ControllerMethods
 

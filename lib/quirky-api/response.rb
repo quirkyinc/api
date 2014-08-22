@@ -35,6 +35,7 @@ module QuirkyApi
     #         }
     #     }
     def respond_with(response, options = {})
+      return if @performed_render
       return render(json: { data: nil }) if response.nil?
 
       # If there's an active model serializer to speak of, use it.
@@ -208,21 +209,21 @@ module QuirkyApi
     end
 
     def respond_forbidden
-      render nothing: true, status: 403
+      head :forbidden
       @performed_render = true
     end
 
     def respond_unauthorized(message = nil)
       if message
-        render json: { errors: message }, status: 401
+        error_response(message, 401)
       else
-        render nothing: true, status: 401
+        head :unauthorized
       end
       @performed_render = true
     end
 
     def respond_not_found
-      render nothing: true, status: 404
+      head :not_found
       @performed_render = true
     end
 
@@ -242,8 +243,6 @@ module QuirkyApi
           klass, oid = matched[1], matched[2]
 
           errors["#{klass}:#{oid}"] = translate_errors(obj.errors)
-        else
-          puts 'test'
         end
       end
     end
