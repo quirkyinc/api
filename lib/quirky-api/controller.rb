@@ -26,6 +26,9 @@ module QuirkyApi
     include ActionController::StrongParameters if defined? ActionController::StrongParameters
     include ActionController::Cookies
     include ActionController::Flash
+    include ActionController::Head
+    include ActionController::HttpAuthentication::Basic::ControllerMethods
+    include ActionController::HttpAuthentication::Token::ControllerMethods
 
     # API functionality.
     include QuirkyApi::Session
@@ -41,6 +44,7 @@ module QuirkyApi
     def self.inherited(base)
       # Include the configured QuirkyApi.auth_system module in the inherited class.
       base.send(:include, ::QuirkyApi.auth_system) if QuirkyApi.auth_system.is_a?(Module)
+      base.send(:include, QuirkyApi::Bouncer)
 
       begin
         # Include the base ApplicationHelper, if possible, in the API controller.

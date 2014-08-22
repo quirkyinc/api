@@ -15,7 +15,7 @@ module QuirkyApi
         base.send :skip_before_filter, :verify_authenticity_token
 
         # Double checks the API token.
-        # base.send :before_filter, :valid_api_credentials?
+        base.send :before_filter, :valid_api_credentials? if defined? ApiKey
       end
     end
 

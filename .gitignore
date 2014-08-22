@@ -3,6 +3,7 @@ log/*.log
 pkg/
 *.gem
 spec/dummy/log
+spec/dummy/tmp
 .yardoc
 doc
 .DS_Store
