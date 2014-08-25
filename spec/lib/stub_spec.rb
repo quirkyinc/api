@@ -3,12 +3,12 @@ require 'spec_helper'
 describe QuirkyApi do
   context 'when stubbing' do
     before do
-      allow(QuirkyApi).to receive(:stub_requests).and_return(true)
-      allow(QuirkyApi::Client).to receive(:qc_host).and_return('http://qc-test.local')
+      allow(QuirkyApi).to receive(:disable_stubs).and_return(false)
+      allow(QuirkyApi::Client).to receive(:qc_host).and_return('http://localhost:8888')
       require 'quirky-api/stub'
     end
 
-    let(:client) { QuirkyApi::Client.new(qc_host: 'http://qc-test.local', qtip_host: 'http://qtip-test.local') }
+    let(:client) { QuirkyApi::Client.new(qc_host: 'http://localhost:8888', qtip_host: 'http://localhost:3000') }
 
     it 'should stub a user find call for user 1' do
       user = client.users.find(1)

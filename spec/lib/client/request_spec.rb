@@ -38,12 +38,12 @@ describe QuirkyApi::Request do
 
   describe '#request' do
     it 'makes and parses a request' do
-      allow_any_instance_of(QuirkyApi::Request).to receive(:build_opts).with('/auth', params: { email: 'test@example.com', pass: 'testing123' }).and_return(host: 'blah.com')
+      allow_any_instance_of(QuirkyApi::Request).to receive(:build_opts).with(:get, '/auth', params: { email: 'test@example.com', pass: 'testing123' }).and_return(host: 'blah.com')
       r = double(:r, run: 'test')
       allow_any_instance_of(QuirkyApi::Request).to receive(:make_request).with(:get, host: 'blah.com').and_return(r)
       allow_any_instance_of(QuirkyApi::Request).to receive(:parse_request).with('test').and_return(true)
 
-      expect_any_instance_of(Object).to receive(:build_opts).with('/auth', { params: { email: 'test@example.com', pass: 'testing123' } }).and_return(host: 'blah.com')
+      expect_any_instance_of(Object).to receive(:build_opts).with(:get, '/auth', { params: { email: 'test@example.com', pass: 'testing123' } }).and_return(host: 'blah.com')
       expect_any_instance_of(Object).to receive(:make_request).with(:get, { host: 'blah.com' }).and_return('test')
       expect_any_instance_of(Object).to receive(:parse_request).with('test').and_return(true)
 
@@ -61,47 +61,47 @@ describe QuirkyApi::Request do
     context 'host' do
       it 'generates a host if has not been presented' do
         expect(QuirkyApi::Client).to receive(:qc_host).and_return('http://test.local')
-        opts = build_opts '/auth', {}
+        opts = build_opts :get, '/auth', {}
         expect(opts[:host]).to eq 'http://test.local'
       end
 
       it 'lets you assign a host' do
         expect(QuirkyApi::Client).to_not receive(:qc_host)
-        opts = build_opts '/auth', host: 'http://banana.local'
+        opts = build_opts :get, '/auth', host: 'http://banana.local'
         expect(opts[:host]).to eq 'http://banana.local'
       end
 
       it 'raises an error if there is no host' do
         allow(QuirkyApi::Client).to receive(:qc_host).and_return(nil)
-        expect { build_opts '/bad', {} }.to raise_error(InvalidRequest)
+        expect { build_opts :get, '/bad', {} }.to raise_error(InvalidRequest)
       end
     end
 
     context 'endpoint' do
       it 'generates an endpoint if one does not exist' do
-        opts = build_opts '/me', {}
+        opts = build_opts :get, '/me', {}
         expect(opts[:endpoint]).to eq '/api/v2/users/me'
       end
 
       it 'lets you assign an endpoint' do
-        opts = build_opts '/me', endpoint: '/me'
+        opts = build_opts :get, '/me', endpoint: '/me'
         expect(opts[:endpoint]).to eq '/me'
       end
 
       it 'raises an error if there is no endpoint' do
         allow_any_instance_of(Object).to receive(:endpoint).and_return('')
         allow(QuirkyApi::Client).to receive(:qc_host).and_return(nil)
-        expect { build_opts '', {} }.to raise_error(InvalidRequest)
+        expect { build_opts :get, '', {} }.to raise_error(InvalidRequest)
       end
     end
 
     it 'generates a request_url if one does not exist' do
-      opts = build_opts '/quirky', {}
+      opts = build_opts :get, '/quirky', {}
       expect(opts[:request_url]).to eq 'http://test.local/api/v2/users/quirky'
     end
 
     it 'lets you assign a request url' do
-      opts = build_opts '/quirky', request_url: 'http://www.google.com'
+      opts = build_opts :get, '/quirky', request_url: 'http://www.google.com'
       expect(opts[:request_url]).to eq 'http://www.google.com'
     end
   end
@@ -132,7 +132,9 @@ describe QuirkyApi::Request do
         'http://www.google.com',
         {
           method: :get,
-          body: 'Handshake',
+          body: {
+            name: 'Mike'
+          },
           params: {
             name: 'Mike'
           },
@@ -167,7 +169,7 @@ describe QuirkyApi::Request do
         'http://www.google.com',
         {
           method: :get,
-          body: 'test',
+          body: 'Handshake',
           params: {},
           headers: {
             'Authorization' => "Client token=\"#{QuirkyApi::Client.api_key}\"",
@@ -175,7 +177,7 @@ describe QuirkyApi::Request do
           }
         }
       )
-      make_request :get, request_url: 'http://www.google.com', body: 'test'
+      make_request :get, request_url: 'http://www.google.com'
     end
   end
 
