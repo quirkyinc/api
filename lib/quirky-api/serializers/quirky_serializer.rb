@@ -1,5 +1,8 @@
 # encoding: utf-8
 
+
+class InvalidField < StandardError ; end
+
 # QuirkySerializer is Quirky's base serializer, providing functionality
 # that inherits from and extends ActiveModel::Serializers.  All serializers
 # that inherit from QuirkySerializer will receive the following (new)
@@ -23,8 +26,8 @@
 #
 class QuirkySerializer < ::ActiveModel::Serializer
   class << self
-    attr_accessor :_optional_fields, :_associations,
-                  :_default_associations, :_options
+    attr_accessor :_optional_fields, :_associations, :_default_associations,
+                  :_validations, :_options
 
     # Optional fields assigned to this serializer.  Optional fields need to
     # be explicitly requested (by passing +extra_fields[]=field+) to be
@@ -81,6 +84,11 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # @see associations
     def default_associations(*default_associations)
       self._default_associations = default_associations
+    end
+
+    def validates(attribute, validation = nil, &block)
+      self._validations ||= {}
+      self._validations[attribute] = (validation.present? ? validation : block)
     end
 
     # Returns warnings about your request. Warnings are messages that alert
@@ -166,6 +174,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # Optional fields and associations from the class level.
     @optional = [*self.class._optional_fields]
     @associations = [*self.class._associations]
+    @validations = self.class._validations
 
     super
   end
@@ -181,44 +190,12 @@ class QuirkySerializer < ::ActiveModel::Serializer
     if @options[:only].present? || @options[:fields].present?
       (@options[:only] ||= []).concat(@options[:fields] ||= [])
       attrs = (attrs & @options[:only].map(&:to_sym))
-
-      filter_attributes(attrs)
     # Exclusive fields.
     elsif @options[:exclude].present?
       attrs = (attrs - @options[:exclude].map(&:to_sym))
-
-      filter_attributes(attrs)
-    # All the fields.
-    else
-      attributes
-    end
-  end
-
-  # Overrides +ActiveModel::Serializer#attributes+ to include associations
-  # and optional fields, if requested.
-  #
-  # @see ActiveModel::Serializer#attributes
-  def attributes
-    data = super
-
-    # Optional fields.
-    optional = _optional
-    if optional.present?
-      optional.each do |field|
-        data[field] = get_optional_field(field)
-      end
     end
 
-    # Associations.
-    joins = _associations
-    if joins.present?
-      joins.each do |join|
-        data[join] = get_association(join)
-      end
-    end
-
-    # All the things.
-    data
+    filter_attributes(attrs)
   end
 
   # @see QuirkySerializer.warnings
@@ -288,14 +265,13 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @see associations
   def get_association(data)
     key = data.to_s
-    if respond_to?(data)
-      data = send(data)
-    elsif object.respond_to?(data)
-      data = object.send(data)
-    else
+
+    begin
+      data = get_field(data)
+    rescue InvalidField => e
       if QuirkyApi.validate_associations
-        fail InvalidAssociation,
-             "The '#{data}' association does not exist."
+        raise InvalidAssociation,
+              "The '#{data}' association does not exist."
       else
         return
       end
@@ -318,14 +294,25 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
-  def get_optional_field(field)
+  def get_field(field)
     if respond_to?(field)
-      return send(field).as_json
+      send(field) if validates? field
     elsif object.respond_to?(field)
-      return object.send(field)
+      object.send(field) if validates? field
+    else
+      fail InvalidField, "#{field} could not be found"
     end
+  end
 
-    nil
+  def validates?(field)
+    return true if @validations.blank?
+
+    # Check if there is a validation at all for this field.
+    validation = @validations[field.to_sym]
+    return true if validation.blank?
+
+    # Call block
+    instance_exec(&validation) === true
   end
 
   # Filters attributes and returns their values.
@@ -334,13 +321,13 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @return [Hash] A hash of key / value pairs.
   def filter_attributes(attrs)
     attributes = attrs.each_with_object({}) do |name, inst|
-      inst[name] = send(name)
+      inst[name] = get_field(name) rescue nil
     end
 
     optional_fields = _optional
     if optional_fields.present?
       optional_fields.each do |field|
-        attributes[field] = get_optional_field(field)
+        attributes[field] = get_field(field) rescue nil
       end
     end
 
