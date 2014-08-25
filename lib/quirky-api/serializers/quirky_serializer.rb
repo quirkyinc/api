@@ -18,7 +18,7 @@ class InvalidField < StandardError ; end
 # * Sub-fields (fields within associations)
 #
 # @example
-#   class UserSerializer < QuirkyApi::QuirkySerializer
+#   class UserSerializer < QuirkySerializer
 #     attributes :id, :name
 #     optional :email
 #     associations :avatar
@@ -39,7 +39,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # @param fields [Array] A comma-separated list of fields that are optional.
     #
     # @example
-    #   class UserSerializer < QuirkyApi::QuirkySerializer
+    #   class UserSerializer < QuirkySerializer
     #     optional :email, :is_russian
     #   end
     #
@@ -56,7 +56,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # @param associations [Array] A comma-separated list of associations.
     #
     # @example
-    #   class UserSerializer < QuirkyApi::QuirkySerializer
+    #   class UserSerializer < QuirkySerializer
     #     associations :profile
     #   end
     #
@@ -76,7 +76,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # @param default_associations [Array] A comma-separated list of associations
     #                                     that should always show up.
     # @example
-    #   class UserSerializer < QuirkyApi::QuirkySerializer
+    #   class UserSerializer < QuirkySerializer
     #     associations :profile, :avatar
     #     default_associations :profile
     #   end
@@ -86,7 +86,30 @@ class QuirkySerializer < ::ActiveModel::Serializer
       self._default_associations = default_associations
     end
 
-    def validates(attribute, validation = nil, &block)
+    # This will ensure that content is secure by validating the passed block,
+    # and only showing an attribute's content if the block returns +true+.  If
+    # the block does not return +true+, this attribute's value will be +null+.
+    #
+    # @param attribute [Symbol] The attribute to run permission checks on.
+    # @param validation [Block] A block that will be run to verify that the
+    #                           viewing party has permission to see the
+    #                           attribute.
+    #
+    # @example
+    #   class UserSerializer < QuirkySerializer
+    #     attributes :id, :name, :email
+    #     verify_permissions :email, -> { @current_user.can? :update, object rescue false }
+    #   end
+    #
+    #   class UserSerializer < QuirkySerializer
+    #     attributes :id, :name, :email
+    #     verify_permissions :email do
+    #       @current_user.can? :update, object rescue false
+    #     end
+    #   end
+    #
+    # @see validates?
+    def verify_permissions(attribute, validation = nil, &block)
       self._validations ||= {}
       self._validations[attribute] = (validation.present? ? validation : block)
     end
@@ -294,6 +317,15 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
+  # Attempts to get the value of a certain field by first checking the
+  # serializer, then the object.  If neither the serializer nor the
+  # object respond to the method, raises an +InvalidField+ exception.
+  #
+  # @param field [String|Symbol] The attribute to get the value for.
+  #
+  # @return [Mixed] Either the value of the attribute, or +InvalidField+ if
+  #                 neither the serializer nor the object responds to the
+  #                 assumed method.
   def get_field(field)
     if respond_to?(field)
       send(field) if validates? field
@@ -304,6 +336,10 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
+  # Confirms that a field passes validations.
+  #
+  # @param field [String|Symbol] The field to check validations on.
+  # @return [Bool] True if the viewer can see, false if not.
   def validates?(field)
     return true if @validations.blank?
 
