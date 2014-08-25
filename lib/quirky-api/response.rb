@@ -184,11 +184,9 @@ module QuirkyApi
         start = objects.index { |obj| obj.id == options[:cursor].to_i }
         objects = objects.slice(start, start + per_page)
       else
-        if options[:reverse]
-          objects = objects.where('id <= ?', options[:cursor])
-        else
-          objects = objects.where('id >= ?', options[:cursor])
-        end
+        id_field = options[:ambiguous_field] ? options[:ambiguous_field] : 'id'
+        predicate = options[:reverse] ? '<=' : '>='
+        objects = objects.where("#{id_field} #{predicate} #{options[:cursor]}")
         objects = objects.limit(options[:per_page]) if options[:per_page]
       end
 
@@ -219,7 +217,8 @@ module QuirkyApi
       {
         per_page: params[:per_page] || 10,
         cursor: params[:cursor] || 1,
-        reverse: false
+        reverse: false,
+        ambiguous_field: nil
       }
     end
 
