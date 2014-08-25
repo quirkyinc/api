@@ -194,12 +194,12 @@ module QuirkyApi
 
       # If we are reverse sorting the objects, the cursor is the minimum id - 1 to point to the next object)
       # If we are sorting it regularly, the cursor is maximum id + 1 to point to the next object
-      cursor = options[:reverse] ? object_ids.min - 1 : object_ids.max + 1
+      cursor = (options[:reverse] ? object_ids.min - 1 : object_ids.max + 1) rescue nil
 
       # If we have reached the last object, cursor should be nil
-      if options[:reverse] && cursor < last_object_id
+      if options[:reverse] && cursor && cursor < last_object_id
         cursor = nil
-      elsif !options[:reverse] && cursor > last_object_id
+      elsif !options[:reverse] && cursor && cursor > last_object_id
         cursor = nil
       end
       [objects, cursor]
