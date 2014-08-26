@@ -178,6 +178,7 @@ module QuirkyApi
     end
 
     def paginate_with_cursor(objects, options = {})
+      return [objects, nil] if objects.empty?
       options = cursor_pagination_options.merge(options)
       last_object_id = objects.last.id
       if objects.is_a?(Array)
