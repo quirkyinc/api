@@ -29,6 +29,7 @@ module QuirkyApi
     include ActionController::Head
     include ActionController::HttpAuthentication::Basic::ControllerMethods
     include ActionController::HttpAuthentication::Token::ControllerMethods
+    include ActionController::ConditionalGet
 
     # API functionality.
     include QuirkyApi::Session
