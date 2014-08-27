@@ -27,7 +27,7 @@ class InvalidField < StandardError ; end
 class QuirkySerializer < ::ActiveModel::Serializer
   class << self
     attr_accessor :_optional_fields, :_associations, :_default_associations,
-                  :_validations, :_options
+                  :_validations, :_options, :_cacheable_fields, :_cache
 
     # Optional fields assigned to this serializer.  Optional fields need to
     # be explicitly requested (by passing +extra_fields[]=field+) to be
@@ -83,6 +83,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     #
     # @see associations
     def default_associations(*default_associations)
+      Rails.logger.warn "DEPRECATION WARNING: 'default_associations' is deprecated and will be removed soon.  Ask for your associations on a per-endpoint basis."
       self._default_associations = default_associations
     end
 
@@ -112,6 +113,30 @@ class QuirkySerializer < ::ActiveModel::Serializer
     def verify_permissions(attribute, validation = nil, &block)
       self._validations ||= {}
       self._validations[attribute] = (validation.present? ? validation : block)
+    end
+
+    def caches(*attrs)
+      fields = []
+
+      if attrs.include? :all
+        fields.concat [*self._attributes.keys].map(&:to_sym) +
+                      [*self._optional_fields].map(&:to_sym) +
+                      [*self._associations].map(&:to_sym)
+      end
+
+      if attrs.include? :associations
+        fields.concat self._associations
+      end
+
+      if attrs.include? :optional_fields
+        fields.concat self._optional_fields
+      end
+
+      if attrs.include? :fields
+        fields.concat self._attributes
+      end
+
+      self._cacheable_fields = fields
     end
 
     # Returns warnings about your request. Warnings are messages that alert
@@ -188,8 +213,10 @@ class QuirkySerializer < ::ActiveModel::Serializer
 
     # If we have default associations, join them to the requested ones.
     if self.class._default_associations.present?
-      (@options[:associations] ||= [])
-        .concat(self.class._default_associations || [])
+      @options[:associations] ||= []
+      @options[:associations].concat(self.class._default_associations || []) unless @options[:only].present?
+
+      @options[:associations]
         .map!(&:to_sym)
         .uniq!
     end
@@ -198,6 +225,11 @@ class QuirkySerializer < ::ActiveModel::Serializer
     @optional = [*self.class._optional_fields]
     @associations = [*self.class._associations]
     @validations = self.class._validations
+
+    if object.respond_to?(:id) && object.respond_to?(:updated_at)
+      self.class._cache ||= {}
+      self.class._cache["#{object.id}.#{object.updated_at.to_i}"] ||= {}
+    end
 
     super
   end
@@ -317,6 +349,23 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
+  def _cached_field(field)
+    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field]
+  end
+
+  def _set_cached_field(field, value)
+    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field] = Rails.cache.fetch([object, field]) { value }
+  end
+
+  def _cached?(field)
+    self.class._cacheable_fields.present? && self.class._cacheable_fields.include?(field.to_sym)
+  end
+
+  def _in_cache?(field)
+    return false if self.class._cache.blank?
+    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field].present?
+  end
+
   # Attempts to get the value of a certain field by first checking the
   # serializer, then the object.  If neither the serializer nor the
   # object respond to the method, raises an +InvalidField+ exception.
@@ -327,12 +376,22 @@ class QuirkySerializer < ::ActiveModel::Serializer
   #                 neither the serializer nor the object responds to the
   #                 assumed method.
   def get_field(field)
-    if respond_to?(field)
-      send(field) if validates? field
-    elsif object.respond_to?(field)
-      object.send(field) if validates? field
+    if _cached?(field)
+      return _cached_field(field) if _in_cache?(field)
+    end
+
+    response = if respond_to?(field)
+                 send(field) if validates? field
+               elsif object.respond_to?(field)
+                 object.send(field) if validates? field
+               else
+                 fail InvalidField, "#{field} could not be found"
+               end
+
+    if _cached?(field)
+      _set_cached_field(field, response)
     else
-      fail InvalidField, "#{field} could not be found"
+      response
     end
   end
 
