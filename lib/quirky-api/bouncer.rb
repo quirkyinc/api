@@ -1,10 +1,13 @@
 # encoding: utf-8
+require 'quirky-api/client/signed_request'
 
 module QuirkyApi
   # The Bouncer module ensures that the API request is valid.  It also removes
   # before_filters that would potentially interfere with the API and sets
   # generic before_filters to be shared across all API's.
   module Bouncer
+    include SignedRequest
+
     def self.included(base)
       if base.respond_to?(:skip_before_filter) &&
          base.respond_to?(:before_filter)
@@ -16,6 +19,8 @@ module QuirkyApi
 
         # Double checks the API token.
         base.send :before_filter, :valid_api_credentials? if defined? ApiKey
+
+        base.send :before_filter, :valid_client_request?
       end
     end
 
