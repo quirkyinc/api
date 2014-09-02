@@ -1,5 +1,8 @@
 # encoding: utf-8
 
+
+class InvalidField < StandardError ; end
+
 # QuirkySerializer is Quirky's base serializer, providing functionality
 # that inherits from and extends ActiveModel::Serializers.  All serializers
 # that inherit from QuirkySerializer will receive the following (new)
@@ -15,7 +18,7 @@
 # * Sub-fields (fields within associations)
 #
 # @example
-#   class UserSerializer < QuirkyApi::QuirkySerializer
+#   class UserSerializer < QuirkySerializer
 #     attributes :id, :name
 #     optional :email
 #     associations :avatar
@@ -23,8 +26,8 @@
 #
 class QuirkySerializer < ::ActiveModel::Serializer
   class << self
-    attr_accessor :_optional_fields, :_associations,
-                  :_default_associations, :_options
+    attr_accessor :_optional_fields, :_associations, :_default_associations,
+                  :_validations, :_options, :_cacheable_fields, :_cache
 
     # Optional fields assigned to this serializer.  Optional fields need to
     # be explicitly requested (by passing +extra_fields[]=field+) to be
@@ -36,7 +39,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # @param fields [Array] A comma-separated list of fields that are optional.
     #
     # @example
-    #   class UserSerializer < QuirkyApi::QuirkySerializer
+    #   class UserSerializer < QuirkySerializer
     #     optional :email, :is_russian
     #   end
     #
@@ -53,7 +56,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # @param associations [Array] A comma-separated list of associations.
     #
     # @example
-    #   class UserSerializer < QuirkyApi::QuirkySerializer
+    #   class UserSerializer < QuirkySerializer
     #     associations :profile
     #   end
     #
@@ -73,14 +76,67 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # @param default_associations [Array] A comma-separated list of associations
     #                                     that should always show up.
     # @example
-    #   class UserSerializer < QuirkyApi::QuirkySerializer
+    #   class UserSerializer < QuirkySerializer
     #     associations :profile, :avatar
     #     default_associations :profile
     #   end
     #
     # @see associations
     def default_associations(*default_associations)
+      Rails.logger.warn "DEPRECATION WARNING: 'default_associations' is deprecated and will be removed soon.  Ask for your associations on a per-endpoint basis."
       self._default_associations = default_associations
+    end
+
+    # This will ensure that content is secure by validating the passed block,
+    # and only showing an attribute's content if the block returns +true+.  If
+    # the block does not return +true+, this attribute's value will be +null+.
+    #
+    # @param attribute [Symbol] The attribute to run permission checks on.
+    # @param validation [Block] A block that will be run to verify that the
+    #                           viewing party has permission to see the
+    #                           attribute.
+    #
+    # @example
+    #   class UserSerializer < QuirkySerializer
+    #     attributes :id, :name, :email
+    #     verify_permissions :email, -> { @current_user.can? :update, object rescue false }
+    #   end
+    #
+    #   class UserSerializer < QuirkySerializer
+    #     attributes :id, :name, :email
+    #     verify_permissions :email do
+    #       @current_user.can? :update, object rescue false
+    #     end
+    #   end
+    #
+    # @see validates?
+    def verify_permissions(attribute, validation = nil, &block)
+      self._validations ||= {}
+      self._validations[attribute] = (validation.present? ? validation : block)
+    end
+
+    def caches(*attrs)
+      fields = []
+
+      if attrs.include? :all
+        fields.concat [*self._attributes.keys].map(&:to_sym) +
+                      [*self._optional_fields].map(&:to_sym) +
+                      [*self._associations].map(&:to_sym)
+      end
+
+      if attrs.include? :associations
+        fields.concat self._associations
+      end
+
+      if attrs.include? :optional_fields
+        fields.concat self._optional_fields
+      end
+
+      if attrs.include? :fields
+        fields.concat self._attributes
+      end
+
+      self._cacheable_fields = fields
     end
 
     # Returns warnings about your request. Warnings are messages that alert
@@ -155,10 +211,24 @@ class QuirkySerializer < ::ActiveModel::Serializer
       end
     end
 
+    if @options[:associations].is_a? String
+      @options[:associations] = @options[:associations].split(',')
+    end
+
+    if @options[:fields].is_a? String
+      @options[:fields] = @options[:fields].split(',')
+    end
+
+    if @options[:extra_fields].is_a? String
+      @options[:extra_fields] = @options[:extra_fields].split(',')
+    end
+
     # If we have default associations, join them to the requested ones.
     if self.class._default_associations.present?
-      (@options[:associations] ||= [])
-        .concat(self.class._default_associations || [])
+      @options[:associations] ||= []
+      @options[:associations].concat(self.class._default_associations || []) unless @options[:only].present?
+
+      @options[:associations]
         .map!(&:to_sym)
         .uniq!
     end
@@ -166,6 +236,12 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # Optional fields and associations from the class level.
     @optional = [*self.class._optional_fields]
     @associations = [*self.class._associations]
+    @validations = self.class._validations
+
+    if object.respond_to?(:id) && object.respond_to?(:updated_at)
+      self.class._cache ||= {}
+      self.class._cache["#{object.id}.#{object.updated_at.to_i}"] ||= {}
+    end
 
     super
   end
@@ -181,44 +257,12 @@ class QuirkySerializer < ::ActiveModel::Serializer
     if @options[:only].present? || @options[:fields].present?
       (@options[:only] ||= []).concat(@options[:fields] ||= [])
       attrs = (attrs & @options[:only].map(&:to_sym))
-
-      filter_attributes(attrs)
     # Exclusive fields.
     elsif @options[:exclude].present?
       attrs = (attrs - @options[:exclude].map(&:to_sym))
-
-      filter_attributes(attrs)
-    # All the fields.
-    else
-      attributes
-    end
-  end
-
-  # Overrides +ActiveModel::Serializer#attributes+ to include associations
-  # and optional fields, if requested.
-  #
-  # @see ActiveModel::Serializer#attributes
-  def attributes
-    data = super
-
-    # Optional fields.
-    optional = _optional
-    if optional.present?
-      optional.each do |field|
-        data[field] = get_optional_field(field)
-      end
     end
 
-    # Associations.
-    joins = _associations
-    if joins.present?
-      joins.each do |join|
-        data[join] = get_association(join)
-      end
-    end
-
-    # All the things.
-    data
+    filter_attributes(attrs)
   end
 
   # @see QuirkySerializer.warnings
@@ -288,14 +332,13 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @see associations
   def get_association(data)
     key = data.to_s
-    if respond_to?(data)
-      data = send(data)
-    elsif object.respond_to?(data)
-      data = object.send(data)
-    else
+
+    begin
+      data = get_field(data)
+    rescue InvalidField => e
       if QuirkyApi.validate_associations
-        fail InvalidAssociation,
-             "The '#{data}' association does not exist."
+        raise InvalidAssociation,
+              "The '#{data}' association does not exist."
       else
         return
       end
@@ -318,14 +361,65 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
-  def get_optional_field(field)
-    if respond_to?(field)
-      return send(field).as_json
-    elsif object.respond_to?(field)
-      return object.send(field)
+  def _cached_field(field)
+    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field]
+  end
+
+  def _set_cached_field(field, value)
+    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field] = Rails.cache.fetch([object, field]) { value }
+  end
+
+  def _cached?(field)
+    self.class._cacheable_fields.present? && self.class._cacheable_fields.include?(field.to_sym)
+  end
+
+  def _in_cache?(field)
+    return false if self.class._cache.blank?
+    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field].present?
+  end
+
+  # Attempts to get the value of a certain field by first checking the
+  # serializer, then the object.  If neither the serializer nor the
+  # object respond to the method, raises an +InvalidField+ exception.
+  #
+  # @param field [String|Symbol] The attribute to get the value for.
+  #
+  # @return [Mixed] Either the value of the attribute, or +InvalidField+ if
+  #                 neither the serializer nor the object responds to the
+  #                 assumed method.
+  def get_field(field)
+    if _cached?(field)
+      return _cached_field(field) if _in_cache?(field)
     end
 
-    nil
+    response = if respond_to?(field)
+                 send(field) if validates? field
+               elsif object.respond_to?(field)
+                 object.send(field) if validates? field
+               else
+                 fail InvalidField, "#{field} could not be found"
+               end
+
+    if _cached?(field)
+      _set_cached_field(field, response)
+    else
+      response
+    end
+  end
+
+  # Confirms that a field passes validations.
+  #
+  # @param field [String|Symbol] The field to check validations on.
+  # @return [Bool] True if the viewer can see, false if not.
+  def validates?(field)
+    return true if @validations.blank?
+
+    # Check if there is a validation at all for this field.
+    validation = @validations[field.to_sym]
+    return true if validation.blank?
+
+    # Call block
+    instance_exec(&validation) === true
   end
 
   # Filters attributes and returns their values.
@@ -334,13 +428,13 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @return [Hash] A hash of key / value pairs.
   def filter_attributes(attrs)
     attributes = attrs.each_with_object({}) do |name, inst|
-      inst[name] = send(name)
+      inst[name] = get_field(name) rescue nil
     end
 
     optional_fields = _optional
     if optional_fields.present?
       optional_fields.each do |field|
-        attributes[field] = get_optional_field(field)
+        attributes[field] = get_field(field) rescue nil
       end
     end
 
