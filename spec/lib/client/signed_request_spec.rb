@@ -132,18 +132,17 @@ describe QuirkyApi::SignedRequest do
   describe '#client_secret' do
     context 'if an ENV var exists for the client_id' do
       it 'returns that ENV var as the secret' do
-        ENV['1_secret'] = 'def'
+        ENV['CLIENT_1_SECRET'] = 'def'
         request_dbl = double('request', headers: { 'Authorization' => 'QuirkyClientAuth 1:abc' })
         allow_any_instance_of(QuirkyApi::SignedRequest).to receive(:request).and_return(request_dbl)
 
         expect(client_secret).to eq 'def'
+        ENV.delete('CLIENT_1_SECRET')
       end
     end
 
     context 'if an ENV var does not exist' do
       it 'sends a request to the auth server for the secret' do
-        ENV.delete('1_secret')
-
         request_dbl = double('request', headers: { 'Authorization' => 'QuirkyClientAuth 1:abc' })
         allow_any_instance_of(QuirkyApi::SignedRequest).to receive(:request).and_return(request_dbl)
 
@@ -182,9 +181,10 @@ describe QuirkyApi::SignedRequest do
     it 'returns a signed key based on the request' do
       request_dbl = double('request', method: 'GET', params: { id: '99' }, url: 'http://auth-test.local/clients/99/secret', headers: { 'Timestamp' => '465861600', 'Authorization' => 'QuirkyClientAuth 100:xxx' })
       allow_any_instance_of(QuirkyApi::SignedRequest).to receive(:request).and_return(request_dbl)
-      ENV['100_secret'] = 'zzz'
+      ENV['CLIENT_100_SECRET'] = 'zzz'
 
       expect(generate_signed_key_from_request).to eq 'S5eFRDpC5LcsPVOr5FAuQ/TrHX8tq/d0hZ0kDSBHHrc='
+      ENV.delete('CLIENT_100_SECRET')
     end
   end
 
