@@ -20,7 +20,13 @@ module QuirkyApi
         # Double checks the API token.
         base.send :before_filter, :valid_api_credentials? if defined? ApiKey
 
-        base.send :before_filter, :valid_client_request?
+        base.send :before_filter, :validate_client_request
+      end
+    end
+
+    def validate_client_request
+      if client_request?
+        return error_response('Invalid request.') unless valid_client_request?
       end
     end
 
