@@ -20,7 +20,7 @@ describe QuirkyApi::ClientHelpers do
 
     it 'requests the show endpoint' do
       allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/1', params: {}).and_return(true)
+      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/1', params: {:id => "1"}).and_return(true)
 
       client.users.find(1)
     end
