@@ -116,11 +116,11 @@ describe QuirkyApi::Request do
         'http://www.google.com',
         {
           method: :get,
-          body: 'Handshake',
-          params: {},
+          body: {}.to_json,
           headers: {
-            'Authorization' => "Client token=\"#{QuirkyApi::Client.api_key}\"",
-            'X-Api-Client-Version' => QuirkyApi::Client::VERSION
+            'X-Api-Client-Version' => QuirkyApi::Client::VERSION,
+            'Content-Type'=>'application/json',
+            'Accept'=>'application/json'
           }
         }
       )
@@ -134,13 +134,11 @@ describe QuirkyApi::Request do
           method: :get,
           body: {
             name: 'Mike'
-          },
-          params: {
-            name: 'Mike'
-          },
+          }.to_json,
           headers: {
-            'Authorization' => "Client token=\"#{QuirkyApi::Client.api_key}\"",
-            'X-Api-Client-Version' => QuirkyApi::Client::VERSION
+            'X-Api-Client-Version' => QuirkyApi::Client::VERSION,
+            'Content-Type'=>'application/json',
+            'Accept'=>'application/json'
           }
         }
       )
@@ -152,11 +150,11 @@ describe QuirkyApi::Request do
         'http://www.google.com',
         {
           method: :get,
-          body: 'Handshake',
-          params: {},
+          body: {}.to_json,
           headers: {
-            'Authorization' => "Client token=\"#{QuirkyApi::Client.api_key}\"",
             'X-Api-Client-Version' => QuirkyApi::Client::VERSION,
+            'Content-Type'=>'application/json',
+            'Accept'=>'application/json',
             'X-App-Version' => '1.0.1'
           }
         }
@@ -169,11 +167,11 @@ describe QuirkyApi::Request do
         'http://www.google.com',
         {
           method: :get,
-          body: 'Handshake',
-          params: {},
+          body: {}.to_json,
           headers: {
-            'Authorization' => "Client token=\"#{QuirkyApi::Client.api_key}\"",
-            'X-Api-Client-Version' => QuirkyApi::Client::VERSION
+            'X-Api-Client-Version' => QuirkyApi::Client::VERSION,
+            'Content-Type'=>'application/json',
+            'Accept'=>'application/json'
           }
         }
       )
@@ -189,8 +187,9 @@ describe QuirkyApi::Request do
 
     it 'returns a auth header and version header' do
       expect(default_headers).to eq({
-        'Authorization' => "Client token=\"abcdefg\"",
-        'X-Api-Client-Version' => '1.2.3'
+        'X-Api-Client-Version' => '1.2.3',
+        'Content-Type'=>'application/json',
+        'Accept'=>'application/json',
       })
     end
 
@@ -200,8 +199,9 @@ describe QuirkyApi::Request do
       })
 
       expect(default_headers).to eq({
-        'Authorization' => "Client token=\"abcdefg\"",
         'X-Api-Client-Version' => '1.2.3',
+        'Content-Type'=>'application/json',
+        'Accept'=>'application/json',
         'X-First-Name' => 'Mike'
       })
     end
