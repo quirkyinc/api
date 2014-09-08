@@ -52,7 +52,7 @@ describe QuirkyApi::ClientHelpers do
 
     it 'sends a put request' do
       allow_any_instance_of(QuirkyApi::User).to receive(:put).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:put).with('/1', params: { email: 'test@example.com' }).and_return(true)
+      expect_any_instance_of(QuirkyApi::User).to receive(:put).with('/1', params: { email: 'test@example.com', id: '1' }).and_return(true)
 
       client.users.update(1, email: 'test@example.com')
     end
@@ -65,7 +65,7 @@ describe QuirkyApi::ClientHelpers do
 
     it 'sends a put request' do
       allow_any_instance_of(QuirkyApi::User).to receive(:delete).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:delete).with('/1', params: {}).and_return(true)
+      expect_any_instance_of(QuirkyApi::User).to receive(:delete).with('/1', params: { id: '1' }).and_return(true)
 
       client.users.destroy(1)
     end
