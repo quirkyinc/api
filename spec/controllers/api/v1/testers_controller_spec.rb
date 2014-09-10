@@ -98,9 +98,22 @@ describe Api::V1::TestersController, type: :controller do
       it 'returns the actual exception' do
         allow(controller)
           .to receive(:errors)
-          .and_raise(Exception.new('Exception'))
+          .and_raise(StandardError.new('Exception'))
 
-        expect { get :errors }.to raise_error(Exception)
+        get :errors
+        expect(response.body).to eq({ errors: 'Something went wrong.' }.to_json)
+      end
+    end
+
+    describe 'with an exception handler that raises the error' do
+      it 'raises the error' do
+        allow(controller)
+          .to receive(:errors)
+          .and_raise(StandardError.new('Blah'))
+
+        allow(QuirkyApi).to receive(:exception_handler).and_return(->(e) { raise e })
+
+        expect { get :errors }.to raise_error('Blah')
       end
     end
 
@@ -113,7 +126,7 @@ describe Api::V1::TestersController, type: :controller do
           .and_raise(CanCan::AccessDenied.new('Unauthorized'))
 
         get :errors
-        expect(response.body).to eq({ errors: 'Unauthorized' }.to_json)
+        expect(response.body).to eq({ errors: 'You are not authorized to do that.' }.to_json)
         expect(response.status).to eq 401
       end
     end
@@ -138,7 +151,7 @@ describe Api::V1::TestersController, type: :controller do
 
         get :errors
         expect(response.body).to eq({
-          errors: 'Not Found'
+          errors: 'Not found.'
         }.to_json)
         expect(response.status).to eq 404
       end
@@ -148,10 +161,10 @@ describe Api::V1::TestersController, type: :controller do
       it 'returns 409 conflict' do
         allow(controller)
           .to receive(:errors)
-          .and_raise(ActiveRecord::RecordNotUnique.new('Not Found', nil))
+          .and_raise(ActiveRecord::RecordNotUnique.new('Not Unique.', nil))
 
         get :errors
-        expect(response.body).to eq({ errors: 'Not Found' }.to_json)
+        expect(response.body).to eq({ errors: 'Record not unique.' }.to_json)
         expect(response.status).to eq 409
       end
     end
