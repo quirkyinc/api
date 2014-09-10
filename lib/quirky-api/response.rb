@@ -143,22 +143,32 @@ module QuirkyApi
 
     # Returns a 401 unauthorized response.
     def unauthorized(e)
-      error_response(e.message, 401)
+      error_response('You are not authorized to do that.', 401)
     end
 
     # Returns a 404 not found response.
     def not_found(e)
-      error_response(e.message, 404)
+      error_response('Not found.', 404)
     end
 
     # Returns 409 (conflict) for not unique records.
     def not_unique(e)
-      error_response(e.message, 409)
+      error_response('Record not unique.', 409)
     end
 
     # Returns an error message.
     def error(e)
       error_response(e.message)
+    end
+
+    def internal_error(e)
+      if QuirkyApi.exception_handler
+        QuirkyApi.exception_handler.call(e)
+      else
+        Rails.logger.error e.message
+      end
+
+      error_response('Something went wrong.')
     end
 
     # Paginates data.

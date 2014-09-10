@@ -7,6 +7,7 @@ module QuirkyApi
   module Rescue
     def self.included(base)
       if base.respond_to?(:rescue_from) && !QuirkyApi.show_exceptions
+        base.send :rescue_from, '::StandardError', with: :internal_error                # 500 Internal Server Error
         base.send :rescue_from, '::CanCan::AccessDenied', with: :unauthorized           # 401 Unauthorized
         base.send :rescue_from, '::InvalidAssociation', with: :error                    # 400 Bad Request
         base.send :rescue_from, '::ActiveRecord::RecordInvalid', with: :record_invalid  # 400 Bad Request
