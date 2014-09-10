@@ -211,16 +211,10 @@ class QuirkySerializer < ::ActiveModel::Serializer
       end
     end
 
-    if @options[:associations].is_a? String
-      @options[:associations] = @options[:associations].split(',')
-    end
-
-    if @options[:fields].is_a? String
-      @options[:fields] = @options[:fields].split(',')
-    end
-
-    if @options[:extra_fields].is_a? String
-      @options[:extra_fields] = @options[:extra_fields].split(',')
+    [:fields, :only, :extra_fields, :associations].each do |field|
+      if @options[field].is_a? String
+        @options[field] = @options[field].split(',')
+      end
     end
 
     # If we have default associations, join them to the requested ones.
