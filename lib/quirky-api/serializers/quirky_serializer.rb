@@ -211,16 +211,30 @@ class QuirkySerializer < ::ActiveModel::Serializer
       end
     end
 
-    if @options[:associations].is_a? String
-      @options[:associations] = @options[:associations].split(',')
+    # Optional fields and associations from the class level.
+    @optional = [*self.class._optional_fields]
+    @associations = [*self.class._associations]
+    @validations = self.class._validations
+
+    [:fields, :only, :extra_fields, :associations].each do |field|
+      if @options[field].is_a? String
+        @options[field] = @options[field].split(',')
+      end
     end
 
-    if @options[:fields].is_a? String
-      @options[:fields] = @options[:fields].split(',')
-    end
+    if @options[:only].present? || @options[:fields].present?
+      fields = (@options[:only] || @options[:fields]).map(&:to_sym)
+      assoc_sect = fields & @associations
+      if assoc_sect.present?
+        @options[:associations] ||= []
+        @options[:associations].concat assoc_sect
+      end
 
-    if @options[:extra_fields].is_a? String
-      @options[:extra_fields] = @options[:extra_fields].split(',')
+      opt_sect = fields & @optional
+      if opt_sect.present?
+        @options[:extra_fields] ||= []
+        @options[:extra_fields].concat opt_sect
+      end
     end
 
     # If we have default associations, join them to the requested ones.
@@ -232,11 +246,6 @@ class QuirkySerializer < ::ActiveModel::Serializer
         .map!(&:to_sym)
         .uniq!
     end
-
-    # Optional fields and associations from the class level.
-    @optional = [*self.class._optional_fields]
-    @associations = [*self.class._associations]
-    @validations = self.class._validations
 
     if object.respond_to?(:id) && object.respond_to?(:updated_at)
       self.class._cache ||= {}

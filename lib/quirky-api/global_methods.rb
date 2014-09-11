@@ -51,8 +51,8 @@ module QuirkyApi
       return if serializer.blank?
 
       options ||= {}
-      options[:current_user] = current_user if defined? current_user
-      options[:params] = params if defined? params
+      options[:current_user] ||= current_user if defined? current_user
+      options[:params] ||= params if defined? params
 
       serializer.new(object, options).as_json(root: false)
     end
