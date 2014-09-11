@@ -5,7 +5,6 @@ class InvalidAssociation < ::Exception ; end
 
 # Dependencies
 require 'active_model_serializers'
-require 'engine'
 
 require 'quirky-api/global_methods'
 include QuirkyApi::Global
