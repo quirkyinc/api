@@ -204,8 +204,8 @@ class QuirkySerializer < ::ActiveModel::Serializer
 
       if val.is_a?(Array)
         @options[sp] ||= []
-        @options[sp] << val
-        @options[sp].flatten!
+        @options[sp].concat val
+        @options[sp] = @options[sp].flatten.uniq
       else
         @options[sp] = val
       end
