@@ -25,9 +25,8 @@ module QuirkyApi
     end
 
     def validate_client_request
-      if client_request?
-        return error_response('Invalid request.') unless valid_client_request?
-      end
+      return unless client_request?
+      return error_response('Invalid request.') unless valid_client_request?
     end
 
     # Ensures that API credentials are valid.  This may disappear one day.
