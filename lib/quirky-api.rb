@@ -7,6 +7,7 @@ class InvalidAssociation < ::Exception ; end
 require 'active_model_serializers'
 
 require 'quirky-api/global_methods'
+require 'quirky-api/deep_encode'
 include QuirkyApi::Global
 
 # Core QuirkyApi modules
