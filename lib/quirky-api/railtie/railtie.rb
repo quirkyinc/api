@@ -4,6 +4,11 @@ module QuirkyApi
   class Railtie < Rails::Railtie
     initializer 'quirky_qc.insert_middleware' do |app|
       app.config.middleware.use 'QuirkyApi::CookieMiddleware'
+      app.config.plugins = [:all, :newrelic_rpm]
+    end
+
+    initializer 'quirky_api.newrelic' do |app|
+      NewRelic::Control.instance.init_plugin(config: app.config)
     end
   end
 

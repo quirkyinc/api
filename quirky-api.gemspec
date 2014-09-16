@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'webmock'
   s.add_dependency 'faker'
   s.add_dependency 'httparty'
+  s.add_dependency 'newrelic_rpm'
 
   s.add_development_dependency 'rails', '4.1.4'
   s.add_development_dependency 'sqlite3'

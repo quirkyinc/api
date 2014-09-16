@@ -2,6 +2,7 @@
 
 module QuirkyApi
   require 'will_paginate'
+  require 'new_relic/agent/instrumentation/rack'
 
   # The +QuirkyApi::Base+ class inherits from ActionController::Metal to offer
   # only the functionality that the API requires.  Using
@@ -30,6 +31,7 @@ module QuirkyApi
     include ActionController::HttpAuthentication::Basic::ControllerMethods
     include ActionController::HttpAuthentication::Token::ControllerMethods
     include ActionController::ConditionalGet
+    include ActionController::Instrumentation if defined? ActionController::Instrumentation
 
     # API functionality.
     include QuirkyApi::Session
@@ -46,6 +48,14 @@ module QuirkyApi
       # Include the configured QuirkyApi.auth_system module in the inherited class.
       base.send(:include, ::QuirkyApi.auth_system) if QuirkyApi.auth_system.is_a?(Module)
       base.send(:include, QuirkyApi::Bouncer)
+
+      # Ensure that we always trace controller actions in Rails < 4.0.  Rails 4
+      # uses ActionController::Instrumentation to automatically watch
+      # every request.
+      if defined?(Rails) && Rails::VERSION::STRING.to_f <= 4.0
+        base.send(:include, ::NewRelic::Agent::Instrumentation::ControllerInstrumentation)
+        base.send(:before_filter, lambda { self.class.add_transaction_tracer(params[:action].to_sym) })
+      end
 
       begin
         # Include the base ApplicationHelper, if possible, in the API controller.
