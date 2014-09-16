@@ -31,7 +31,6 @@ module QuirkyApi
     include ActionController::HttpAuthentication::Basic::ControllerMethods
     include ActionController::HttpAuthentication::Token::ControllerMethods
     include ActionController::ConditionalGet
-    include ActionController::Instrumentation if defined? ActionController::Instrumentation
 
     # API functionality.
     include QuirkyApi::Session
@@ -48,6 +47,8 @@ module QuirkyApi
       # Include the configured QuirkyApi.auth_system module in the inherited class.
       base.send(:include, ::QuirkyApi.auth_system) if QuirkyApi.auth_system.is_a?(Module)
       base.send(:include, QuirkyApi::Bouncer)
+
+      base.send(:include, ActionController::Instrumentation)
 
       # Ensure that we always trace controller actions in Rails < 4.0.  Rails 4
       # uses ActionController::Instrumentation to automatically watch
