@@ -24,6 +24,10 @@ module QuirkyApi
       end
     end
 
+    def ensure_client_request
+      return error_response('Invalid request.') unless valid_client_request?
+    end
+
     def validate_client_request
       return unless client_request?
       return error_response('Invalid request.') unless valid_client_request?
