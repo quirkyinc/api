@@ -2,7 +2,6 @@
 
 module QuirkyApi
   require 'will_paginate'
-  require 'new_relic/agent/instrumentation/rack'
 
   # The +QuirkyApi::Base+ class inherits from ActionController::Metal to offer
   # only the functionality that the API requires.  Using
@@ -16,6 +15,8 @@ module QuirkyApi
   #    # Intentionally left blank
   #  end
   class Base < ActionController::Metal
+    require 'new_relic/agent/instrumentation/rack' if defined? ::NewRelic
+
     # Core Rails functionality.
     include AbstractController::Rendering
     include AbstractController::Callbacks

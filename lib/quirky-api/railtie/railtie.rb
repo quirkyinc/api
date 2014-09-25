@@ -8,7 +8,7 @@ module QuirkyApi
     end
 
     initializer 'quirky_api.newrelic' do |app|
-      NewRelic::Control.instance.init_plugin(config: app.config)
+      ::NewRelic::Control.instance.init_plugin(config: app.config) if defined? ::NewRelic
     end
   end
 
