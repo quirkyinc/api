@@ -73,7 +73,7 @@ describe QuirkyApi::Request do
 
       it 'raises an error if there is no host' do
         allow(QuirkyApi::Client).to receive(:qc_host).and_return(nil)
-        expect { build_opts :get, '/bad', {} }.to raise_error(InvalidRequest)
+        expect { build_opts :get, '/bad', {} }.to raise_error(QuirkyApi::Request::InvalidRequest)
       end
     end
 
@@ -91,7 +91,7 @@ describe QuirkyApi::Request do
       it 'raises an error if there is no endpoint' do
         allow_any_instance_of(Object).to receive(:endpoint).and_return('')
         allow(QuirkyApi::Client).to receive(:qc_host).and_return(nil)
-        expect { build_opts :get, '', {} }.to raise_error(InvalidRequest)
+        expect { build_opts :get, '', {} }.to raise_error(QuirkyApi::Request::InvalidRequest)
       end
     end
 
