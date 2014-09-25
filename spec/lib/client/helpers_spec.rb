@@ -6,10 +6,21 @@ describe QuirkyApi::ClientHelpers do
 
   describe '#list' do
     it 'requests the index endpoint' do
-      allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/', params: {}).and_return(true)
+      res = double(:response, failure?: false)
+
+      allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return res
+      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/', params: {}).and_return(res)
 
       client.users.list
+    end
+
+    it 'throws an error if there was an error with the request' do
+      res = double(:response, failure?: true, code: 404, errors: 'Not found.')
+
+      allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return res
+      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/', params: {}).and_return(res)
+
+      expect { client.users.list }.to raise_error(QuirkyApi::NotFound)
     end
   end
 
@@ -19,10 +30,20 @@ describe QuirkyApi::ClientHelpers do
     end
 
     it 'requests the show endpoint' do
-      allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return true
-      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/1', params: {:id => "1"}).and_return(true)
+      res = double(:response, failure?: false)
+      allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return(res)
+      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/1', params: {:id => "1"}).and_return(res)
 
       client.users.find(1)
+    end
+
+    it 'throws an error if there was an error with the request' do
+      res = double(:response, failure?: true, code: 404, errors: 'Not found.')
+
+      allow_any_instance_of(QuirkyApi::User).to receive(:get).and_return(res)
+      expect_any_instance_of(QuirkyApi::User).to receive(:get).with('/1', params: {:id => "1"}).and_return(res)
+
+      expect { client.users.find(1) }.to raise_error(QuirkyApi::NotFound)
     end
   end
 
