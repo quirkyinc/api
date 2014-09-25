@@ -219,6 +219,7 @@ describe QuirkyApi::Request do
       expect { response.blah }.to raise_error LoadError
 
       expect(response.success?).to eq true
+      expect(response.failure?).to eq false
     end
 
     it 'parses an array and returns an array of classes' do
@@ -237,6 +238,7 @@ describe QuirkyApi::Request do
       end
 
       expect(response.success?).to eq true
+      expect(response.failure?).to eq false
     end
 
     it 'returns false for success? if it failed' do
@@ -250,6 +252,7 @@ describe QuirkyApi::Request do
       expect { response.blah }.to raise_error LoadError
 
       expect(response.success?).to eq false
+      expect(response.failure?).to eq true
     end
 
     it 'returns errors if there are any' do
@@ -258,7 +261,37 @@ describe QuirkyApi::Request do
       response = banana.send(:parse_request, res)
       expect(response).to_not be_an_instance_of QuirkyApi::User
       expect(response).to eq({ 'errors' => 'Fail' })
+
       expect(response.success?).to eq false
+      expect(response.failure?).to eq true
+      expect(response.errors).to eq 'Fail'
+    end
+  end
+
+  describe '#raise_error!' do
+    let(:res) { OpenStruct.new(code: 404, errors: 'Errors Occurred.') }
+    it 'raises a NotFound error if the response code is 404' do
+      expect { raise_error!(res) }.to raise_error(QuirkyApi::Request::NotFound)
+    end
+
+    it 'raise a BadRequest error if the response code is 400' do
+      res.code = 400
+      expect { raise_error!(res) }.to raise_error(QuirkyApi::Request::BadRequest)
+    end
+
+    it 'raises an Unauthorized error if the response code is 401' do
+      res.code = 401
+      expect { raise_error!(res) }.to raise_error(QuirkyApi::Request::Unauthorized)
+    end
+
+    it 'raises a ServerError error if the response code is 500' do
+      res.code = 500
+      expect { raise_error!(res) }.to raise_error(QuirkyApi::Request::ServerError)
+    end
+
+    it 'raises a BadRequest error if the response code is anything else' do
+      res.code = 503
+      expect { raise_error!(res) }.to raise_error(QuirkyApi::Request::BadRequest)
     end
   end
 end
