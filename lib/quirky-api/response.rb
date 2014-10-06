@@ -196,7 +196,13 @@ module QuirkyApi
         objects = objects.slice(start, start + per_page)
       else
         id_field = options[:ambiguous_field] ? options[:ambiguous_field] : 'id'
-        predicate = options[:reverse] ? '<=' : '>='
+        if options[:reverse]
+          predicate = '<='
+          options[:cursor] ||= objects.first.id
+        else
+          predicate = '>='
+          options[:cursor] ||= 1
+        end
         objects = objects.where("#{id_field} #{predicate} #{options[:cursor]}")
         objects = objects.limit(options[:per_page]) if options[:per_page]
       end
@@ -205,15 +211,15 @@ module QuirkyApi
 
       # If we are reverse sorting the objects, the cursor is the minimum id - 1 to point to the next object)
       # If we are sorting it regularly, the cursor is maximum id + 1 to point to the next object
-      cursor = (options[:reverse] ? object_ids.min - 1 : object_ids.max + 1) rescue nil
+      next_cursor = (options[:reverse] ? object_ids.min - 1 : object_ids.max + 1) rescue nil
 
-      # If we have reached the last object, cursor should be nil
-      if options[:reverse] && cursor && cursor < last_object_id
-        cursor = nil
-      elsif !options[:reverse] && cursor && cursor > last_object_id
-        cursor = nil
+      # If we have reached the last object, next_cursor should be nil
+      if options[:reverse] && next_cursor && next_cursor < last_object_id
+        next_cursor = nil
+      elsif !options[:reverse] && next_cursor && next_cursor > last_object_id
+        next_cursor = nil
       end
-      [objects, cursor]
+      [objects, next_cursor]
     end
 
     # Default options for pagination.
@@ -227,7 +233,7 @@ module QuirkyApi
     def cursor_pagination_options
       {
         per_page: params[:per_page] || 10,
-        cursor: params[:cursor] || 1,
+        cursor: params[:cursor],
         reverse: false,
         ambiguous_field: nil
       }
