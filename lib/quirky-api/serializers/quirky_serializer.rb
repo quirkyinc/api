@@ -122,21 +122,26 @@ class QuirkySerializer < ::ActiveModel::Serializer
         fields.concat [*self._attributes.keys].map(&:to_sym) +
                       [*self._optional_fields].map(&:to_sym) +
                       [*self._associations].map(&:to_sym)
+
+        attrs.delete(:all)
       end
 
       if attrs.include? :associations
         fields.concat self._associations
+        attrs.delete(:associations)
       end
 
       if attrs.include? :optional_fields
         fields.concat self._optional_fields
+        attrs.delete(:optional_fields)
       end
 
       if attrs.include? :fields
         fields.concat self._attributes
+        attrs.delete(:fields)
       end
 
-      self._cacheable_fields = fields
+      self._cacheable_fields = fields.concat(attrs)
     end
 
     # Returns warnings about your request. Warnings are messages that alert

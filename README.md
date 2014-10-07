@@ -1,21 +1,24 @@
 # Quirky API
 
-The Quirky API gem provides the base functionality for API usage across all Quirky apps.
+The `quirky-api` gem provides a library of useful tools and methods to help make API development easier.  It also provides a client that interacts with the actual Quirky API.
 
-All functionality will automatically be included by adding the `quirky-api` gem to your Gemfile:
+All functionality is automatically included by adding `quirky-api` to your Gemfile:
 
 ```ruby
-gem 'quirky-api', '~> 1.0.8'
+gem 'quirky-api'
 ```
 
 ## Usage
 
-API controllers may be namespaced however you wish, but should always inherit from `QuirkyApi::Base`.  No further action is required.
+API controllers may be namespaced however you wish, but should always inherit from `QuirkyApi::Base`.  `QuirkyApi::Base` provides the helper methods and performance improvements essential to the API.
 
 ```ruby
 module Api
   module V1
-    class TestController < QuirkyApi::Base
+    class UsersController < QuirkyApi::Base
+      def index
+        respond_with User.all
+      end
     end
   end
 end
@@ -23,21 +26,21 @@ end
 
 ## Rendering content
 
-Always use `respond_with` to render your content.
+Use `respond_with` to render content in the API.  `respond_with`, in the scope of `quirky-api`, is an abstraction that provides better integration with Active Model Serializers.  It also provides a [TODO number of options](#options) that make responding with dynamic content easier.
 
 ```ruby
 module Api
   module V1
-    class TestController < QuirkyApi::Base
+    class UsersController < QuirkyApi::Base
       def index
-        respond_with Test.paginate(page: 1 || params[:page], per_page: 15 || params[:per_page])
+        respond_with User.paginate(page: 1 || params[:page], per_page: 15 || params[:per_page])
       end
     end
   end
 end
 ```
 
-`respond_with` will always return the output in json, wrapped in a "data" key:
+`respond_with` always outputs content as JSON.  Objects are subsequently wrapped inside a `data` key, as below:
 
 ```json
 {
@@ -56,10 +59,11 @@ end
 }
 ```
 
-There are a few caveats to how `respond_with` works:
+### Response caveats:
 
-* If your content is an array, it will *always* return an array, regardless of the number of elements in said array.  `respond_with` will attempt to serialize every object in the array.
-* If you pass a single object, it will return that single object, serialized:
+* If the content passed to `respond_with` is an array (of any type), regardless of the number of elements in said array, `respond_with` will return that content wrapped in an array, as above.
+
+* If you pass a single object to `respond_with`, data will be presented as a single hash, as below:
 
   ```ruby
   respond_with User.first
@@ -73,24 +77,24 @@ There are a few caveats to how `respond_with` works:
     }
   }
   ```
-* If you pass a boolean value, or nil, it will still return the data key but respond only with the boolean value:
+* If you pass a boolean value, a string, or nil, the output will still contain the `data` key, but the value will only be the literal that you passed:
 
   ```ruby
-  respond_with true # or false, or nil
+  respond_with true # or false, or nil, or 'toast'....
   ```
   ```json
   {
     "data": true
   }
   ```
-* If you pass a hash, you *must* surround your hash with parenthesis.  `respond_with` will not attempt to serialize anything in a hash.  If you wish to serialize something, you must serialize it yourself:
+* If you pass a hash, you *must* surround your hash with parenthesis.  `respond_with` will intentionally not serialize any values of a hash.  Once again, `respond_with` WILL INTENTIONALLY NOT SERIALIZE ANY VALUES OF A HASH.  If you wish to serialize something, serialize it yourself with the `serialize` helper method:
 
   ```ruby
   respond_with({
     bool: true,
     user_id: 1,
-    user: UserSerializer.new(User.first).as_json(root: false),
-    followers: QuirkyArraySerializer.new(User.first.followers).as_json(root: false)
+    user: serialize(User.first),
+    followers: serialize(User.first.followers)
   })
   ```
   ```json
@@ -124,9 +128,11 @@ There are a few caveats to how `respond_with` works:
   ```
   ```json
   {
-    "errors": "Couldn't find User with 'id'=9999999999"
+    "errors": "Not found."
   }
   ```
+
+### Changing response status code
 
 `respond_with` also accepts an optional `status` option, as a second parameter.  The `status` option will specify the status code that the response should return.
 
@@ -135,7 +141,9 @@ There are a few caveats to how `respond_with` works:
 respond_with @user, status: 201 # Or any other valid status code
 ```
 
-`respond_with` also accepts an optional `elements` option, as a second parameter.  `elements` will let you specify top-level keys for the JSON output:
+### Top level elements
+
+`respond_with` also accepts an optional `elements` option, as a second parameter.  `elements` will let you specify top-level keys for the JSON output.  The value should be a hash.
 
 ```ruby
 respond_with User.first, elements: { status: 'success' }
@@ -155,7 +163,7 @@ Both `elements` and `status` may be combined.
 
 ## `respond_with` second parameter options
 
-Here are all of the available second parameter options to `respond_with`.  All are optional:
+Here are all of the available second parameter options to `respond_with`.  All are optional and may be used in tandem:
 
 - `status` will change the status of the response.  This must be a valid status code.
 
@@ -197,19 +205,18 @@ All of the above may be combined, mixed and matched, or not used at all.
 
 ## Serializers
 
-The Quirky API gem exposes a slightly altered instance of ActiveModel Serializers.  AMS serializes data and returns only what you want to return.
+The Quirky API gem exposes a slightly altered instance of ActiveModel Serializers.  AMS serializes an object and returns only what you want to return.
 
-Serializers should be placed in the `app/serializers` directory, and be named `model_name_serializer.rb`.  They should have this structure:
+Serializers should be placed in the `app/serializers` directory, and be named `model_name_serializer.rb` where `model_name` is `object.class.underscore`.  Serializers should have this structure:
 
 ```ruby
 class ModelNameSerializer < QuirkySerializer
   attributes :id, :name, :last_name, :fav_animal
-  associations :profile, :avatar
-  default_associations :profile
   optional :town, :age
+  associations :profile, :avatar
 
   def fav_animal
-    # This overrides the default avlue of fav_animal.
+    # This overrides the value of object.fav_animal and always returns 'Giraffe'.
     'Giraffe'
   end
 
@@ -226,7 +233,6 @@ class ModelNameSerializer < QuirkySerializer
 end
 ```
 
-Let's go over what all of this means:
 
 ### Attributes
 
@@ -234,22 +240,64 @@ Let's go over what all of this means:
 attributes :id, :name, :last_name
 ```
 
-This will specify what attributes will appear by default when serializing content with this serializer.  Attributes can be be any column or method that exists on the model, or even something that you want to set up manually:
+This will specify what attributes will appear by default when serializing content with this serializer.  The value of an attribute is determined like so:
 
-* If the model has a column of the same name as the attribute, the attribute will be the value of that column on the model.
-* If the model has a method, scope or association of the same name as the attribute, the attribute's value will be the result of calling that method, scope or association.
-* If the model has no method, scope, association or column of the same name as the attribute, you must manually specify the value:
+1. If the serializer has a method of the same name as an attribute, the serializer will return the value of that method.
 
-  ```ruby
-  def fav_animal
-    # Use object to reference the model.
-    object.favorite_animal
-  end
-  ```
+   ```ruby
+   # UserSerializer
+   attribute :id, :name, :fav_animal
 
-In all cases, the value of the attribute can be overridden by specifying a method of the same name.  The attribute's value will then be the result of that method.
+   # ...
 
-Attributes are not individually serialized.  If you wish to serialize the output of one attribute, do it manually.
+   def fav_animal
+     'Zebra'
+   end
+
+   # The serialized value will always be 'Zebra'.
+   ```
+2. If the serializer does not have a method / association of the same name as an attribute, but the model does, the serializer will return the value of the method called on the model.
+
+   ```ruby
+   # UserSerializer
+   attribute :id, :name, :fav_animal
+
+   # User model
+
+   def fav_animal
+     if real_life?
+       'Giraffe'
+     else
+       'Taun Taun'
+     end
+   end
+
+   # The serialized value of fav_animal will be either 'Giraffe' or 'Taun Taun', depending on the value of real_life?
+   ```
+
+3. If neither the serializer nor the model have a method / association of the same name as an attribute, a `NameError` will be thrown.
+
+By default, attributes are not serialized.  If you want an attribute serialized, use the `serialize` helper method or make that attribute an association.
+
+### Optional fields
+
+```ruby
+optional :town, :age
+```
+
+The only difference between optional fields and attributes is that optional fields do not show up by default.  Optional fields need to be requested either in the request itself, or on the endpoint with `respond_with`:
+
+```
+GET api/v1/users?extra_fields=town,age
+```
+
+Or...
+
+```ruby
+respond_with User.all, extra_fields: [:town, :age]
+```
+
+Everything else about optional fields behaves like attributes.  Optional fields are not serialized by default.  If you wish to serialize an optional field, use the `serialize` helper method or make that optional field an association.
 
 ### Associations
 
@@ -257,68 +305,138 @@ Attributes are not individually serialized.  If you wish to serialize the output
 associations :profile, :avatar
 ```
 
-Associations are similar to attributes, but they *are* serialized individually.  The output of associations follow the same rules as attributes.
+Associations are similar to attributes, but they *are* serialized based on the class of the associated object.
 
-Once we have the output of an association, QuirkyApi attemps to find a serializer that matches the object returned, and run that serializer on that object.  The serialized objecet is the final value.
+Retrieving the associated object on an object behaves much the same way as an attribute:
 
-Associations do not show up by default unless specified (see below).  You may ask for associations in the request:
+1. Check the serializer
+2. Check the model
+3. Fail
 
-```
-GET api/v1/users?associations[]=profile&associations[]=avatar
-```
+Once the serializer has the associated object, it attempts to find a serializer for that object and serialize it.  The value of the attribute in the original response, then, will be the serialized sub-object.
 
-Or through `respond_with`:
-
-```ruby
-respond_with User.all, associations: ['profile', 'avatar']
-```
-
-### Default Associations
+As an example, say we were serializing a User object.  The UserSerializer looks like this:
 
 ```ruby
-default_associations :profile
-```
-
-Default associations are associations that always appear in the output, regardless of whether you ask for them or not.  Default associations must individually match a value in the `associations` list.
-
-You cannot request default associations.
-
-### Optional fields
-
-```ruby
-optional :town, :age
-# ...
-
-def age
-  if object.age > 20 && object.age < 50
-    'Young'
-  elsif object.age > 50
-    'Old'
-  else
-    'Really young'
-  end
+class UserSerializer
+  attributes :id, :first, :last
+  associations :profile
 end
 ```
 
-Optional fields are similar to attributes in their execution and output, but must be requested to show up.  Optional fields are not serialized, unless you do it manually.
-
-You may request optional fields with the `extra_fields` array in a request:
-
-```
-GET api/v1/users?extra_fields[]=town&extra_fields[]=age
-```
-
-Or as an optional parameter in `respond_with`:
+We retrieve the profile from the user model by calling `user.profile`.  Since the profile, in turn, is an instance of the `Profile` class, it will be serialized with the `ProfileSerializer`:
 
 ```ruby
-respond_with User.all, extra_fields: ['town', 'age']
+class ProfileSerializer
+  attributes :bio, :town, :skills
+end
+```
+
+So the complete response will look like this:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "first": "Test",
+    "last": "User",
+    "profile": {
+      "bio": "I'm a test user",
+      "town": "NYC",
+      "skills": "Testing, Driving"
+    }
+  }
+}
+```
+
+Associations do not show up by default.  They need to be requested either in the request itself, or on the endpoint with `respond_with`:
+
+```
+GET api/v1/users?associations=profile,avatar
+```
+
+Or...
+
+```ruby
+respond_with User.all, associations: [:profile, :avatar]
+```
+
+### Association filtering
+
+Meta-filtering is possible, only for associations, due to the fact that they are serialized inside of a serialized object.  In the same way that you would request field inclusion or exclusion, optional fields and / or associations, you may do so on associations themself, by prefixing the association name to `_fields`, `_extra_fields` or `_associations`.
+
+```ruby
+respond_with User.all, associations: [:profile], profile_fields: [:town, :bio], profile_associations: [:avatar]
+```
+
+## Caching data
+
+Caching is a very complicated topic in serialization, given serialized data often changes.  That said, there is a helper on every serializer called `caches` that attemps to aleviate some of that pain.
+
+`caches` works by rendering an object, and along the way caching every single attribute on that object (instead of the entire object at once).  This makes processing significantly faster on subsequent serialization.  The caching works like this:
+
+```ruby
+Rails.cache.fetch [object, field] do
+  get_value(field)
+end
+```
+
+This in turns uses the object's `cache_key` in order to generate the cache token.  Unless overridden, a typical cache key is `object_class_name-object_id/updated_at.to_i`.  Therefore, but touching the object at an time, you effectively bust the cache for that serialized object.
+
+`caches` takes a number of possible values, which may be used together or not at all:
+
+- `:all` will cache every attribute, optional field and association.
+- `:fields` will cache only attributes.
+- `:optional_fields` will cache only optional fields.
+- `:associations` will cache only associations.
+- `:field_name` will cache just that field.
+
+Example uses:
+
+```ruby
+# Caches everything
+caches :all
+
+# Caches only fields and associations
+caches :fields, :associations
+
+# Caches the 'email' field and the 'profile' association, but nothing else
+caches :email, :profile
 ```
 
 ## Serializing data
 
-To serialize data, you need to use the serializers that are described above.  Remember that `respond_with` will attempt to serialize data automatically, but in cases where you want to do it on your own, use serializers.
+Data is serialized for response by way of the serializers described above.  By default, `respond_with` performs the serialization for you, but in the case that you want to serialize an object yourself, you still can.
 
-### Individual object serialization
+### `serialize` helper method
+
+The `serialize` helper method makes it easy to serialize any object or array of objects.  Simple call `serialize(object)`:
+
+```ruby
+serialize(User.first)
+```
+
+`serialize` also accepts two optional parameters:
+
+1. the optional second parameter is the serializer to use to serialize that object.  If it is nil, the method will figure out the serializer for you.
+2. the optional third parameter is any options to pass to the serializer.  You may use any of the [second parameter options for `respond_with`](#respond_with-second-parameter-options), in this parameter.
+
+The `serialize` method also automatically sends `current_user` and `params` to every serializer, so that those values may be used inside the serializer.  You do not need to do anything for those helpers to be sent.
+
+Examples:
+
+```ruby
+# Serializes the first user with UserSerializer
+serialize(User.first)
+
+# Serializes the first user with SpecialUserSerializer
+serialize(User.first, SpecialUserSerializer)
+
+# Serializes the first user and asks only for their first name and their profile
+serialize(User.first, nil, only: [:first_name], associations: [:profile])
+```
+
+### Manual serialization
 
 Say you wanted to serialize a single user:
 
@@ -342,13 +460,13 @@ If you wish to ask for only specific fields, use the `only` parameter:
 
 ### Array serialization
 
-If you wish to serialize an array of data, use `QuirkyArraySerializer`.
+If you wish to serialize an array of objects, use `QuirkyArraySerializer`.
 
 ```ruby
 @user = QuirkyArraySerializer.new(User.all).as_json(root: false)
 ```
 
-The same options that apply to object serialization apply to `QuirkyArraySerializer`.  `QuirkyArraySerializer` will attempt to find a serializer for every item in the array, and serialize that item with that serializer.
+The same options that apply to object serialization apply to `QuirkyArraySerializer`.  `QuirkyArraySerializer` will attempt to find a serializer for every item in the array, and serialize that item with that serializer and with any options passed as the second parameter.
 
 ```ruby
 @user = QuirkyArraySerializer.new(User.all, only: [:id, :name]).as_json(root: false)
