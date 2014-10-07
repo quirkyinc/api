@@ -1,5 +1,32 @@
 # Quirky API
 
+- [Explanation](#explanation)
+- [Usage](#usage)
+- [Rendering content](#rendering)
+  - [Caveats](#response-caveats)
+  - [Changing response status code](#changing-response-status-code)
+  - [Top level elements](#top-level-elements)
+- [`respond_with` second parameter options](#respond_with-second-parameter-options)
+  - [status](#respond_with-second-parameter-options)
+  - [associations](#respond_with-second-parameter-options)
+  - [extra_fields](#respond_with-second-parameter-options)
+  - [only](#respond_with-second-parameter-options)
+  - [exclude](#respond_with-second-parameter-options)
+  - [elements](#respond_with-second-parameter-options)
+- [Serializers](#serializers)
+  - [Attributes](#attributes)
+  - [Optional fields](#optional-fields)
+  - [Associations](#associations)
+    - [Association filtering](#association-filtering)
+  - [Caching data](#caching-data)
+- [Serializing data](#serializing-data)
+  - [`serialize` helper method](#serialize-helper-method)
+  - [Manual serialization](#manual-serialization)
+  - [Array serialization](#array-serialization)
+- [QuirkyApi::Client](#quirkyapi-client)
+
+## Explanation
+
 The `quirky-api` gem provides a library of useful tools and methods to help make API development easier.  It also provides a client that interacts with the actual Quirky API.
 
 All functionality is automatically included by adding `quirky-api` to your Gemfile:
@@ -471,3 +498,5 @@ The same options that apply to object serialization apply to `QuirkyArraySeriali
 ```ruby
 @user = QuirkyArraySerializer.new(User.all, only: [:id, :name]).as_json(root: false)
 ```
+
+## QuirkyApi::Client
