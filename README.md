@@ -27,7 +27,7 @@
   - [Explanation](#client-explanation)
   - [Usage](#client-usage)
     - [Available helpers](#available-helpers)
-    - [Custom helpers](#custom-helpers)
+    - [Custom request methods](#custom-request-methods)
   - [Security](#security)
   - [Client models](#client-models)
     - [`api_host`](#api_host)
@@ -512,9 +512,9 @@ The same options that apply to object serialization apply to `QuirkyArraySeriali
 
 ## Client explanation
 
-The `QuirkyApi::Client` is the API wrapper for communication quirky API's.  It generates secure, signed requests and handles responses with pseudo models.
+The `QuirkyApi::Client` is a library that communicates with Quirky APIs across each applications.  It generates secure, signed requests and handles responses with pseudo models.
 
-`QuirkyApi::Client` is available with the `quirky-api` gem.
+`QuirkyApi::Client` is automatically available with the `quirky-api` gem.
 
 ## Client Usage
 
@@ -525,23 +525,32 @@ client = QuirkyApi::Client.new
 client.users.find(1) # Will make a request to fetch user 1.
 ```
 
+The model name should always be lowercase and pluralized.  Good examples are: `users`, `products`, `inventions`.
+
 ### Available helpers
 
 There are several helpers available in typical client requests:
 
-- `model.find(ID)` (`GET #{api_endpoint}/#{ID}`) will find a single (model) based on the specified ID.
-- `model.find_batches([IDS])` (`GET #{api_endpoint}/#{IDS.join(',')}`) will find several (models) based on (IDS).
 - `model.list` (`GET #{api_endpoint}`) will hit the "index" endpoint, which should return an array of (model)s.
+- `model.find(ID)` (`GET #{api_endpoint}/#{ID}`) will find a single (model) based on the specified ID.
+- `model.find_batches([IDS])` (`GET #{api_endpoint}/#{IDS.join(',')}`) will find several (models) that have IDs that match (IDS).
 - `model.create(ATTRS)` (`POST #{api_endpoint}`) will attempt to create an instance of (model).
-- `model.create!(ATTRS)` (`POST #{api_endpoint}`) will attempt to create an instance of (model), but will raise errors if something goes wrong.
+- `model.create!(ATTRS)` (`POST #{api_endpoint}`) will attempt to create an instance of (model).  It will raise errors if something goes wrong.
 - `model.update(ID, ATTRS)` (`PUT #{api_endpoint}/#{ID}`) will update the (model) specified by (ID), passing (ATTRS).
 - `model.update!(ID, ATTRS)` (`PUT #{api_endpoint}/#{ID}`) will update the (model) specified by (ID), passing (ATTRS).  It will raise errors if something goes wrong.
 - `model.destroy(ID)` (`DELETE #{api_endpoint}/#{ID}`) will delete the (model) specified by (ID).
 - `model.destroy!(ID)` (`DELETE #{api_endpoint}/#{ID}`) will delete the (model) specified by (ID).  It will raise errors if something goes wrong.
 
-### Custom helpers
+**Note**: You may pass custom parameters to any of these helpers as a first parameter (for `list` and `create`) or a second parameter (for `find`, `find_batches,`, `update`, `destroy`).  Parameters may be passed like so:
 
-`QuirkyApi::Client` also provides `get`, `post`, `put` and `delete` helpers for custom request methods.  In API models, you can create a simple custom request like so:
+```ruby
+client = QuirkyApi::Client.new
+client.users.list(per_page: 10)
+```
+
+### Custom request methods
+
+`QuirkyApi::Client` also provides `get`, `post`, `put` and `delete` helpers.  In API models, you can create custom request methods with those helpers to do unique operations outside of the "available helpers" described above:
 
 ```ruby
 class QuirkyApi::User < Client
@@ -552,15 +561,22 @@ class QuirkyApi::User < Client
 end
 ```
 
-The response will be parsed in exactly the same way as the available helpers described above.
+Notice the simple execution of this.  Parsing happens automatically.  Note that you must pass params as a hash under a `params` key.
+
+The above custom method would be used like this:
+
+```ruby
+client = QuirkyApi::Client.new
+client.users.authenticate('test@example.com', 'pass123')
+```
+
+Response parsing happens automatically.  The result of the above would request would be an instance of `QuirkyApi::User`.
 
 ## Security
 
-QuirkyApi::Client secures requests by signing them before-hand, then generating the assumed signed request on the other side and comparing them.  If for some reason the assumed request (on the receiving end) does not match the actual signed headers, the request will fail.
+`QuirkyApi::Client` signs requests with the app-specific client secret before making the actaul request.  When a request is received and recognized as a client request (which happens automatically), the receiving server generates a signed string from the request it receives.  If for some reason the signed string on the receiving server does not match the one in the request, the request will fail with errors.
 
-Requests are signed with a client ID and secret generated from a client on the [auth server](https://github.com/quirkyinc/auth).
-
-Signed requests are completely transparent in the `QuirkyApi::Client`.  No action needs to be taken on a the request level to confirm the request is secure.
+Signed requests are completely transparent in the `QuirkyApi::Client`.  On every request, regardless if they are custom or generic, everything is signed.
 
 ## Client models
 
@@ -572,9 +588,12 @@ As an example, if you make a request to find user 1:
 ```ruby
 client = QuirkyApi::Client.new
 client.users.find(1)
+# => #<QuirkyApi::User:0x00000103b74338 @id=1, @name="First1 Last1", @email="anon-1@example.net", ....>
 ```
 
-...Then `QuirkyApi::Client` automatically knows that it's dealing with the `User` model.  There is a file called `lib/quirky-api/client/user.rb` which contains the user model:
+...Then `QuirkyApi::Client` automatically knows that it's dealing with the `User` model.  The result of the above request, then, would be an instance of `QuirkyApi::User`.
+
+  There is a file called `lib/quirky-api/client/user.rb` which contains the user model:
 
 ```ruby
 module QuirkyApi
@@ -606,39 +625,45 @@ The user model breaks down what request should be made, to where, and what attri
 
 ### `api_host`
 
-`api_host` defines what host to make the request to.  At the moment, the options are `:qc`, `:qtip` and `:auth`.  These are directly correlated with `config.qc_host`, `config.qtip_host` and `config.auth_host` on every `QuirkyApi.configure` call.
+`api_host` defines what host to make the request to.  Current options are `:qc`, `:qtip` and `:auth`.
 
-When a request is made, `QuirkyApi::Client` automatically gets the host based on this value.  It calls `QuirkyApi::Client.send("#{api_host}_host")` to retrieve it.  So, if `config.qc_host` is `http://localhost:3000`, then the request will be made to `http://localhost:3000`.
+The `QuirkyApi::Client` figures out what the actual host is by getting the result of `config.#{api_host}_host`.  For example, if `api_host` is `:qc`, then the value of it will be `config.qc_host`, which will in turn be `http://localhost:3000`.
+
+When a request is made, `QuirkyApi::Client` automatically gets the host as described.  The host, combined with minor logic behind `api_endpoint` as explained below, helps to generate the final request.
 
 ### `api_endpoint`
 
-`api_endpoint` is the direct endpoint, on the specified host, upon which requests should be made.  Ergo, all requests made to this model will at least *start* with that string.
-
-As an example, if I call:
+`api_endpoint` is the base controller endpoint, on the `api_host`, upon which to make requests.  `QuirkyApi::Client` has logic to mutate the `api_endpoint` string appropriately depending on what sort of request you are making.  Therefore, the value of `api_endpoint` should always end with just the controller name and no leading slash:
 
 ```ruby
-client.users.find(1)
+api_endpoint '/api/v2/users'
 ```
 
-It actually needs to call....
+#### Endpoint mutation
 
-```
-GET /api/v2/users/1
-```
-
-..which is instinctively knows how to do.  If, on the other hand, we call:
+As already stated, the client has logic to mutate the endpoint as appropriate to the specific request you're making.  `list` and `create` will make a request to the endpoint, only needing to change the request method:
 
 ```ruby
 client.users.list
+# GET /api/v2/users
+
+client.users.create(name: 'Mike', email: 'test@example.com')
+# POST /api/v2/users
 ```
 
-It actually requests...
+`find`, `update` and `destroy` will automatically append the ID you specify to the `api_endpoint` value, and use the appropriate request method:
 
-```
-GET /api/v2/users
-```
 
-So the `api_endpoint` parameter should point at the 'root' level of a particular api endpoint.
+```ruby
+client.users.find(1)
+# GET /api/v2/users/1
+
+client.users.update(1, name: 'Tom')
+# PUT /api/v2/users/1
+
+cilent.users.destroy(1)
+# DELETE /api/v2/users/1
+```
 
 ### Virtus model
 
