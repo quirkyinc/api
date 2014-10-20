@@ -143,6 +143,7 @@ describe QuirkyApi::SignedRequest do
 
     context 'if an ENV var does not exist' do
       it 'sends a request to the auth server for the secret' do
+        ENV.delete('CLIENT_1_SECRET')
         request_dbl = double('request', headers: { 'Authorization' => 'QuirkyClientAuth 1:abc' })
         allow_any_instance_of(QuirkyApi::SignedRequest).to receive(:request).and_return(request_dbl)
 
