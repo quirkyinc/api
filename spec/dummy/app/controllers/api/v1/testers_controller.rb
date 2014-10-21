@@ -15,8 +15,20 @@ class Api::V1::TestersController < QuirkyApi::Base
     respond_with 'status', status: 201
   end
 
-  def with_elements
-    respond_with 'elements', elements: { banana: 'cream pie' }
+  def with_hash_elements
+    respond_with({ name: 'elements' }, elements: { banana: 'cream pie' })
+  end
+
+  def with_bool_elements
+    respond_with(true, elements: { banana: 'cream pie' })
+  end
+
+  def with_string_elements
+    respond_with('elements', elements: { banana: 'cream pie' })
+  end
+
+  def with_arr_elements
+    respond_with ['one', 'two', 'three'], elements: { banana: 'cream pie' }
   end
 
   def invalid_request

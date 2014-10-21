@@ -17,7 +17,10 @@ Dummy::Application.routes.draw do
           get 'as_str'
           get 'single_as_arr'
           get 'with_status'
-          get 'with_elements'
+          get 'with_hash_elements'
+          get 'with_bool_elements'
+          get 'with_string_elements'
+          get 'with_arr_elements'
         end
       end
     end

@@ -64,14 +64,13 @@ module QuirkyApi
              end
 
       # Check for warnings if applicable.
-      if !@res.blank? && QuirkyApi.warn_invalid_fields &&
-         data.is_a?(Hash)
+      if !@res.blank? && QuirkyApi.warn_invalid_fields && data.is_a?(Hash)
         warnings = @res.warnings(params)
         data[:warnings] = warnings if warnings.present?
       end
 
-      if data.is_a?(Hash)
-        data.merge!(options[:elements]) if options[:elements].present?
+      if data.is_a?(Hash) && options[:elements].present?
+        data.merge!(options[:elements])
       end
 
       renderable = { json: data }

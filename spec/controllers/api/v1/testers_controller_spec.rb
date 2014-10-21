@@ -223,18 +223,56 @@ describe Api::V1::TestersController, type: :controller do
   end
 
   describe 'GET #with_elements' do
-    before do
-      QuirkyApi.envelope = 'data'
+    context 'with an envelope' do
+      before do
+        QuirkyApi.envelope = 'data'
+      end
+
+      after do
+        QuirkyApi.envelope = nil
+      end
+
+      it 'returns data with top level elements' do
+        get :with_hash_elements
+        expect(response.body).to eq({
+          data: {
+            name: 'elements'
+          },
+          banana: 'cream pie'
+        }.to_json)
+      end
     end
-    after do
-      QuirkyApi.envelope = nil
-    end
-    it 'returns data with top level elements' do
-      get :with_elements
-      expect(response.body).to eq({
-        data: 'elements',
-        banana: 'cream pie'
-      }.to_json)
+    context 'with no envelope' do
+      context 'with a hash' do
+        it 'returns data with top level elements' do
+          get :with_hash_elements
+          expect(response.body).to eq({
+            name: 'elements',
+            banana: 'cream pie'
+          }.to_json)
+        end
+      end
+
+      context 'with a boolean' do
+        it 'returns no top level elements' do
+          get :with_bool_elements
+          expect(response.body).to eq("true")
+        end
+      end
+
+      context 'with a string' do
+        it 'returns no top level elements' do
+          get :with_string_elements
+          expect(response.body).to eq("elements")
+        end
+      end
+
+      context 'with an array' do
+        it 'returns no top level elements' do
+          get :with_arr_elements
+          expect(response.body).to eq(['one', 'two', 'three'].to_json)
+        end
+      end
     end
   end
 
