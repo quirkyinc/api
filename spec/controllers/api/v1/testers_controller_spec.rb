@@ -2,18 +2,44 @@
 
 require 'spec_helper'
 
+shared_examples_for 'a wrappable endpoint' do |body, method, endpoint|
+  context 'with no envelope' do
+    before do
+      QuirkyApi.envelope = nil
+    end
+
+    it 'returns just the body' do
+      send(method, endpoint)
+      expect(response.body).to eq body
+    end
+  end
+
+  context 'with an envelope' do
+    before do
+      QuirkyApi.envelope = 'data'
+    end
+
+    after do
+      QuirkyApi.envelope = nil
+    end
+
+    it 'returns the body, wrapped in an envelope' do
+      send(method, endpoint)
+      expect(response.body).to eq("{\"data\":#{body}}")
+    end
+  end
+end
+
 describe Api::V1::TestersController, type: :controller do
   describe 'GET #as_one' do
     before { @tester = FactoryGirl.create(:tester, name: 'Tester', last_name: 'Atqu') }
 
     it 'returns one' do
       get :as_one, format: :json
-      expect(response.body).to eq({
-        id: 1,
-        name: 'Tester',
-        product: nil
-      }.to_json)
+      expect(response.body).to eq({ id: 1, name: 'Tester', product: nil }.to_json)
     end
+
+    it_behaves_like 'a wrappable endpoint', { id: 1, name: 'Tester', product: nil }.to_json, 'get', 'as_one'
   end
 
   describe 'GET #as_true' do
@@ -21,6 +47,8 @@ describe Api::V1::TestersController, type: :controller do
       get :as_true
       expect(response.body).to eq("true")
     end
+
+    it_behaves_like 'a wrappable endpoint', 'true', 'get', 'as_true'
   end
 
   describe 'GET #as_false' do
@@ -28,6 +56,8 @@ describe Api::V1::TestersController, type: :controller do
       get :as_false
       expect(response.body).to eq("false")
     end
+
+    it_behaves_like 'a wrappable endpoint', 'false', 'get', 'as_false'
   end
 
   describe 'GET #as_nil' do
@@ -35,6 +65,8 @@ describe Api::V1::TestersController, type: :controller do
       get :as_nil
       expect(response.body).to eq("null")
     end
+
+    it_behaves_like 'a wrappable endpoint', 'null', 'get', 'as_nil'
   end
 
   describe 'GET #as_hash' do
@@ -45,6 +77,8 @@ describe Api::V1::TestersController, type: :controller do
         three: 'four'
       }.to_json)
     end
+
+    it_behaves_like 'a wrappable endpoint', {one: 'two', three: 'four'}.to_json, 'get', 'as_hash'
   end
 
   describe 'GET #as_arr' do
@@ -52,6 +86,8 @@ describe Api::V1::TestersController, type: :controller do
       get :as_arr
       expect(response.body).to eq(%w(one two three).to_json)
     end
+
+    it_behaves_like 'a wrappable endpoint', %w(one two three).to_json, 'get', 'as_arr'
   end
 
   describe 'GET #as_str' do
@@ -59,18 +95,42 @@ describe Api::V1::TestersController, type: :controller do
       get :as_str, format: 'json'
       expect(response.body).to eq('one')
     end
+
+    context 'with no envelope' do
+      before do
+        QuirkyApi.envelope = nil
+      end
+
+      it 'returns just the body' do
+        get :as_str, format: 'json'
+        expect(response.body).to eq 'one'
+      end
+    end
+
+    context 'with an envelope' do
+      before do
+        QuirkyApi.envelope = 'data'
+      end
+
+      after do
+        QuirkyApi.envelope = nil
+      end
+
+      it 'returns the body, wrapped in an envelope' do
+        get :as_str, format: 'json'
+        expect(response.body).to eq("{\"data\":\"one\"}")
+      end
+    end
   end
 
   describe 'GET #single_as_arr' do
     before { @tester = FactoryGirl.create(:tester, name: 'Tester', last_name: 'Atqu') }
     it 'returns an array with one element' do
       get :single_as_arr, format: 'json'
-      expect(response.body).to eq([{
-        id: 1,
-        name: 'Tester',
-        product: nil
-      }].to_json)
+      expect(response.body).to eq([{ id: 1, name: 'Tester', product: nil }].to_json)
     end
+
+    it_behaves_like 'a wrappable endpoint', [{ id: 1, name: 'Tester', product: nil }].to_json, 'get', 'single_as_arr'
   end
 
   describe 'GET #errors' do
