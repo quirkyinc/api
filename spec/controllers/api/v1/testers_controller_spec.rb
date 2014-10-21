@@ -352,7 +352,7 @@ describe Api::V1::TestersController, type: :controller do
       end
     end
 
-    context 'associations', focus: true do
+    context 'associations' do
       it 'responds to associations' do
         FactoryGirl.create(:post)
         get :index, format: 'json', associations: ['post']

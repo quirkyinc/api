@@ -406,7 +406,6 @@ class QuirkySerializer < ::ActiveModel::Serializer
       return _cached_field(field) if _in_cache?(field)
     end
 
-    puts field
     response = if respond_to?(field)
                  send(field) if validates?(field)
                elsif object.respond_to?(field)

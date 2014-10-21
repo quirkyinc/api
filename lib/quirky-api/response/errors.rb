@@ -106,14 +106,16 @@ module QuirkyApi
         end
       end
 
-      private
-
       # Returns an error with a status code.
       #
       # @param msg [String] The message to show up.
       # @param status [Fixnum] The status code to return.  Default is 400.
       def error_response(msg, status = 400)
         render json: { errors: msg }, status: status
+      end
+
+      def error(e, status = 400)
+        error_response(e.message, status)
       end
     end
   end
