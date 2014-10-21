@@ -8,6 +8,15 @@ class Api::V1::TestersController < QuirkyApi::Base
   end
 
   def errors
+    # Intentionally left blank for error testing.
+  end
+
+  def with_status
+    respond_with 'status', status: 201
+  end
+
+  def with_elements
+    respond_with 'elements', elements: { banana: 'cream pie' }
   end
 
   def invalid_request

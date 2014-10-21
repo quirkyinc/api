@@ -214,6 +214,30 @@ describe Api::V1::TestersController, type: :controller do
     end
   end
 
+  describe 'GET #with_status' do
+    it 'returns data with a status' do
+      get :with_status
+      expect(response.body).to eq('status')
+      expect(response.status).to eq 201
+    end
+  end
+
+  describe 'GET #with_elements' do
+    before do
+      QuirkyApi.envelope = 'data'
+    end
+    after do
+      QuirkyApi.envelope = nil
+    end
+    it 'returns data with top level elements' do
+      get :with_elements
+      expect(response.body).to eq({
+        data: 'elements',
+        banana: 'cream pie'
+      }.to_json)
+    end
+  end
+
   describe 'GET #index' do
     before do
       @one = FactoryGirl.create(:tester, name: 'Mike', last_name: 'Sea')
