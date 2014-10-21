@@ -1,8 +1,14 @@
 # encoding: utf-8
 
+require 'quirky-api/response/errors'
+require 'quirky-api/response/pagination'
+
 module QuirkyApi
   # The response module handles response and status code methods for the API.
   module Response
+    include Errors
+    include Pagination
+
     # Returns a JSON response for the API.
     #
     # @param response [Mixed Array|String|Hash|nil|Bool] The data to return.
@@ -36,7 +42,7 @@ module QuirkyApi
     #     }
     def respond_with(response, options = {})
       return if @performed_render
-      return render(json: { data: nil }) if response.nil?
+      return render(json: envelope(nil)) if response.nil?
 
       # If there's an active model serializer to speak of, use it.
       # Otherwise, just render what we've got.
@@ -52,13 +58,14 @@ module QuirkyApi
                end
 
                @res = serializer.new(response, options)
-               { data: @res.as_json(root: false) }
+               envelope(@res.as_json(root: false))
              else
-               { data: response }
+               envelope(response)
              end
 
       # Check for warnings if applicable.
-      if !@res.blank? && QuirkyApi.warn_invalid_fields
+      if !@res.blank? && QuirkyApi.warn_invalid_fields &&
+         !data.is_a?(Array)
         warnings = @res.warnings(params)
         data[:warnings] = warnings if warnings.present?
       end
@@ -136,109 +143,6 @@ module QuirkyApi
       render json: response, status: 200
     end
 
-    # Returns a 400 bad request response.
-    def bad_request(e)
-      error_response(e, 400)
-    end
-
-    # Returns a 401 unauthorized response.
-    def unauthorized(e)
-      error_response('You are not authorized to do that.', 401)
-    end
-
-    # Returns a 404 not found response.
-    def not_found(e)
-      error_response('Not found.', 404)
-    end
-
-    # Returns 409 (conflict) for not unique records.
-    def not_unique(e)
-      error_response('Record not unique.', 409)
-    end
-
-    # Returns an error message.
-    def error(e)
-      error_response(e.message)
-    end
-
-    def internal_error(e)
-      if QuirkyApi.exception_handler
-        QuirkyApi.exception_handler.call(e)
-      else
-        Rails.logger.error e.message
-      end
-
-      error_response('Something went wrong.')
-    end
-
-    # Paginates data.
-    #
-    # @param objects [Array|Object] The object(s) to paginate.
-    # @param options [Hash] A hash of options that will
-    #                       overwrite pagination_options.
-    #
-    # @see pagination_options
-    def paginate(objects, options = {})
-      options = self.pagination_options.merge(options)
-      unless objects.is_a?(Array)
-        objects.paginate(options)
-      else
-        objects[((options[:page].to_i - 1) * options[:per_page].to_i)...(options[:per_page].to_i * options[:per_page].to_i)] || []
-      end
-    end
-
-    def paginate_with_cursor(objects, options = {})
-      return [objects, nil] if objects.empty?
-      options = cursor_pagination_options.merge(options)
-      last_object_id = objects.last.id
-      if objects.is_a?(Array)
-        start = objects.index { |obj| obj.id == options[:cursor].to_i }
-        objects = objects.slice(start, start + per_page)
-      else
-        id_field = options[:ambiguous_field] ? options[:ambiguous_field] : 'id'
-        if options[:reverse]
-          predicate = '<='
-          options[:cursor] ||= objects.first.id
-        else
-          predicate = '>='
-          options[:cursor] ||= 1
-        end
-        objects = objects.where("#{id_field} #{predicate} #{options[:cursor]}")
-        objects = objects.limit(options[:per_page]) if options[:per_page]
-      end
-
-      object_ids = objects.map(&:id).compact
-
-      # If we are reverse sorting the objects, the cursor is the minimum id - 1 to point to the next object)
-      # If we are sorting it regularly, the cursor is maximum id + 1 to point to the next object
-      next_cursor = (options[:reverse] ? object_ids.min - 1 : object_ids.max + 1) rescue nil
-
-      # If we have reached the last object, next_cursor should be nil
-      if options[:reverse] && next_cursor && next_cursor < last_object_id
-        next_cursor = nil
-      elsif !options[:reverse] && next_cursor && next_cursor > last_object_id
-        next_cursor = nil
-      end
-      [objects, next_cursor]
-    end
-
-    # Default options for pagination.
-    def pagination_options
-      {
-        per_page: params[:per_page] || 10,
-        page: params[:page] || 1
-      }
-    end
-
-    def cursor_pagination_options
-      {
-        per_page: params[:per_page] || 10,
-        cursor: params[:cursor],
-        reverse: false,
-        ambiguous_field: nil
-      }
-    end
-
     def excludeable(key)
       yield unless (params['exclude'] || []).include? key
     end
@@ -248,94 +152,7 @@ module QuirkyApi
       sanitizer.sanitize(params)
     end
 
-    # Error handlers
-
-    def unknown_action
-      respond_not_found
-    end
-
-    def param_invalid(e)
-      respond_bad_request(e.message)
-    end
-
-    def record_invalid(e)
-      respond_bad_request_with_errors(e.record.errors)
-    end
-
-    def respond_forbidden
-      head :forbidden
-      @performed_render = true
-    end
-
-    def respond_unauthorized(message = nil)
-      if message
-        error_response(message, 401)
-      else
-        head :unauthorized
-      end
-      @performed_render = true
-    end
-
-    def respond_not_found
-      head :not_found
-      @performed_render = true
-    end
-
-    def respond_bad_request_with_errors(errors)
-      errors = translate_errors(errors)
-      respond_bad_request(errors)
-    end
-
-    def respond_bad_request(errors)
-      respond({ errors: errors }, 400)
-    end
-
-    def validate_multiple(objects)
-      objects.each_with_object({}) do |obj, errors|
-        if obj.invalid?
-          matched = obj.to_s.match(/([A-Za-z0-9\-\_]*)\:([A-Za-z0-9\-\_]*)/)
-          klass, oid = matched[1], matched[2]
-
-          errors["#{klass}:#{oid}"] = translate_errors(obj.errors)
-        end
-      end
-    end
-
-    def translate_errors(errors)
-      # Gets the model that has the errors.
-      model = errors.instance_variable_get('@base')
-
-      errors.each_with_object({}) do |(key, error), hsh|
-        # Some nested attributes get a weird dot syntax.
-        key = key.to_s.split('.').last if key.match(/\./)
-
-        # Retrieves the full error and cleans it as necessary.
-        full_message = if key.to_s == 'base'
-                         error
-                       else
-                         col = model.class.human_attribute_name(key)
-                         "#{col} #{error}"
-                       end
-
-        (hsh[key] ||= []) << full_message
-      end
-    end
-
-    def respond(response, status = 200)
-      render json: response, status: status,
-             serializer: false, each_serializer: false
-      @performed_render = true
-    end
-
     protected
-
-    # Returns an error with a status code.
-    #
-    # @param msg [String] The message to show up.
-    # @param status [Fixnum] The status code to return.  Default is 400.
-    def error_response(msg, status = 400)
-      render json: { errors: msg }, status: status
-    end
 
     # Serializes data and returns as a hash with root based off of options.
     # This method should not be called manually; See +respond_as_json+, above.
@@ -371,7 +188,19 @@ module QuirkyApi
         presentable = QuirkyArraySerializer.new([*data], options)
       end
 
-      { 'data' => presentable }
+      envelope(presentable)
+    end
+
+    private
+
+    # Envelopes data based on +QuirkyApi.envelope+.
+    #
+    # @param data [Object] Any type of object.
+    #
+    # @return [Hash] The enveloped data, if applicable.
+    def envelope(data)
+      return data if QuirkyApi.envelope.blank?
+      { QuirkyApi.envelope.to_s => data }
     end
   end
 end

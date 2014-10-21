@@ -4,7 +4,8 @@
 module QuirkyApi
   class << self
     attr_accessor :validate_associations, :warn_invalid_fields, :auth_system,
-                  :show_exceptions, :disable_stubs, :exception_handler
+                  :show_exceptions, :disable_stubs, :exception_handler,
+                  :envelope
     def configure
       yield(self)
     end

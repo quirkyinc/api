@@ -20,7 +20,6 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'active_model_serializers', '0.8.1'
   s.add_dependency 'will_paginate', '3.0.5'
-  s.add_dependency 'apipie-rails'
   s.add_dependency 'typhoeus'
   s.add_dependency 'yajl-ruby'
   s.add_dependency 'virtus'

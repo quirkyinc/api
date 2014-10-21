@@ -14,7 +14,7 @@ include QuirkyApi::Global
 require 'quirky-api/configurable'
 require 'quirky-api/rescue'
 require 'quirky-api/bouncer'
-require 'quirky-api/session'
+require 'quirky-api/auth'
 require 'quirky-api/mobile'
 require 'quirky-api/response'
 require 'quirky-api/can'

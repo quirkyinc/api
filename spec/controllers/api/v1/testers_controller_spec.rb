@@ -9,11 +9,9 @@ describe Api::V1::TestersController, type: :controller do
     it 'returns one' do
       get :as_one, format: :json
       expect(response.body).to eq({
-        data: {
-          id: 1,
-          name: 'Tester',
-          product: nil
-        }
+        id: 1,
+        name: 'Tester',
+        product: nil
       }.to_json)
     end
   end
@@ -21,27 +19,21 @@ describe Api::V1::TestersController, type: :controller do
   describe 'GET #as_true' do
     it 'returns true' do
       get :as_true
-      expect(response.body).to eq({
-        data: true
-      }.to_json)
+      expect(response.body).to eq("true")
     end
   end
 
   describe 'GET #as_false' do
     it 'returns false' do
       get :as_false
-      expect(response.body).to eq({
-        data: false
-      }.to_json)
+      expect(response.body).to eq("false")
     end
   end
 
   describe 'GET #as_nil' do
     it 'returns a null object' do
       get :as_nil
-      expect(response.body).to eq({
-        data: nil
-      }.to_json)
+      expect(response.body).to eq("null")
     end
   end
 
@@ -49,10 +41,8 @@ describe Api::V1::TestersController, type: :controller do
     it 'returns a hash' do
       get :as_hash
       expect(response.body).to eq({
-        data: {
-          one: 'two',
-          three: 'four'
-        }
+        one: 'two',
+        three: 'four'
       }.to_json)
     end
   end
@@ -60,18 +50,14 @@ describe Api::V1::TestersController, type: :controller do
   describe 'GET #as_arr' do
     it 'returns an array' do
       get :as_arr
-      expect(response.body).to eq({
-        data: %w(one two three)
-      }.to_json)
+      expect(response.body).to eq(%w(one two three).to_json)
     end
   end
 
   describe 'GET #as_str' do
     it 'returns a string' do
       get :as_str, format: 'json'
-      expect(response.body).to eq({
-        data: 'one'
-      }.to_json)
+      expect(response.body).to eq('one')
     end
   end
 
@@ -79,13 +65,11 @@ describe Api::V1::TestersController, type: :controller do
     before { @tester = FactoryGirl.create(:tester, name: 'Tester', last_name: 'Atqu') }
     it 'returns an array with one element' do
       get :single_as_arr, format: 'json'
-      expect(response.body).to eq({
-        data: [{
-          id: 1,
-          name: 'Tester',
-          product: nil
-        }]
-      }.to_json)
+      expect(response.body).to eq([{
+        id: 1,
+        name: 'Tester',
+        product: nil
+      }].to_json)
     end
   end
 
@@ -207,74 +191,101 @@ describe Api::V1::TestersController, type: :controller do
     end
 
     it 'responds with data' do
-      expect(response.body).to eq({
-        data: [
-          {
-            id: 1,
-            name: 'Mike'
-          }.merge(product_serialized),
-          {
-            id: 2,
-            name: 'Tom'
-          }.merge(product_serialized)
-        ]
-      }.to_json)
+      expect(response.body).to eq([
+        {
+          id: 1,
+          name: 'Mike'
+        }.merge(product_serialized),
+        {
+          id: 2,
+          name: 'Tom'
+        }.merge(product_serialized)
+      ].to_json)
     end
 
     it 'responds to field inclusion' do
       get :index, format: 'json', fields: ['id']
-      expect(response.body).to eq({
-        data: [
-          {
-            id: 1
-          }.merge(product_serialized),
-          {
-            id: 2
-          }.merge(product_serialized)
-        ]
-      }.to_json)
+      expect(response.body).to eq([
+        {
+          id: 1
+        }.merge(product_serialized),
+        {
+          id: 2
+        }.merge(product_serialized)
+      ].to_json)
     end
 
     it 'responds to field exclusion' do
       get :index, format: 'json', exclude: ['id']
-      expect(response.body).to eq({
-        data: [
-          {
-            name: 'Mike'
-          }.merge(product_serialized),
-          {
-            name: 'Tom'
-          }.merge(product_serialized)
-        ]
-      }.to_json)
+      expect(response.body).to eq([
+        {
+          name: 'Mike'
+        }.merge(product_serialized),
+        {
+          name: 'Tom'
+        }.merge(product_serialized)
+      ].to_json)
     end
 
     context 'optional fields' do
       it 'responds to optional fields' do
         get :index, format: 'json', extra_fields: ['last_name']
-        expect(response.body).to eq({
-          data: [
-            {
-              id: 1,
-              name: 'Mike',
-              last_name: 'Sea'
-            }.merge(product_serialized),
-            {
-              id: 2,
-              name: 'Tom',
-              last_name: 'Hanks'
-            }.merge(product_serialized)
-          ]
-        }.to_json)
+        expect(response.body).to eq([
+          {
+            id: 1,
+            name: 'Mike',
+            last_name: 'Sea'
+          }.merge(product_serialized),
+          {
+            id: 2,
+            name: 'Tom',
+            last_name: 'Hanks'
+          }.merge(product_serialized)
+        ].to_json)
       end
 
       context 'if warn_invalid_fields is true' do
-        it 'throws a warning for bad optional fields' do
-          allow(QuirkyApi).to receive(:warn_invalid_fields).and_return(true)
+        context 'and there is an envelope' do
+          before do
+            QuirkyApi.envelope = 'data'
+          end
 
-          get :index, format: 'json', extra_fields: ['favorite_animal']
-          expect(response.body).to eq({
-            data: [
+          after do
+            QuirkyApi.envelope = nil
+          end
+
+          it 'throws a warning for bad optional fields' do
+            allow(QuirkyApi).to receive(:warn_invalid_fields).and_return(true)
+
+            get :index, format: 'json', extra_fields: ['favorite_animal']
+            expect(response.body).to eq({
+             data: [
+                {
+                  id: 1,
+                  name: 'Mike'
+                }.merge(product_serialized),
+                {
+                  id: 2,
+                  name: 'Tom'
+                }.merge(product_serialized)
+              ],
+              warnings: [
+                "The 'favorite_animal' field is not a valid optional field"
+              ]
+            }.to_json)
+          end
+        end
+
+        context 'and there is no envelope' do
+          before do
+            QuirkyApi.envelope = nil
+          end
+
+          it 'does not show warnings' do
+            allow(QuirkyApi).to receive(:warn_invalid_fields).and_return(true)
+
+            get :index, format: 'json', extra_fields: ['favorite_animal']
+            expect(response.body).to eq([
               {
                 id: 1,
                 name: 'Mike'
@@ -283,20 +294,50 @@ describe Api::V1::TestersController, type: :controller do
                 id: 2,
                 name: 'Tom'
               }.merge(product_serialized)
-            ],
-            warnings: [
-              "The 'favorite_animal' field is not a valid optional field"
-            ]
-          }.to_json)
+            ].to_json)
+          end
         end
       end
-      context 'if warn_invalid_fields is falsey' do
-        it 'throws no warning for bad optional fields' do
-          allow(QuirkyApi).to receive(:warn_invalid_fields).and_return(false)
 
-          get :index, format: 'json', extra_fields: ['favorite_animal']
-          expect(response.body).to eq({
-            data: [
+      context 'if warn_invalid_fields is falsey' do
+        context 'and there is an envelope' do
+          before do
+            QuirkyApi.envelope = 'data'
+          end
+
+          after do
+            QuirkyApi.envelope = nil
+          end
+
+          it 'throws no warning for bad optional fields' do
+            allow(QuirkyApi).to receive(:warn_invalid_fields).and_return(false)
+
+            get :index, format: 'json', extra_fields: ['favorite_animal']
+            expect(response.body).to eq({
+              data: [
+                {
+                  id: 1,
+                  name: 'Mike'
+                }.merge(product_serialized),
+                {
+                  id: 2,
+                  name: 'Tom'
+                }.merge(product_serialized)
+              ]
+            }.to_json)
+          end
+        end
+
+        context 'and there is no envelope' do
+          before do
+            QuirkyApi.envelope = nil
+          end
+
+          it 'throws no warning for bad optional fields' do
+            allow(QuirkyApi).to receive(:warn_invalid_fields).and_return(false)
+
+            get :index, format: 'json', extra_fields: ['favorite_animal']
+            expect(response.body).to eq([
               {
                 id: 1,
                 name: 'Mike'
@@ -305,28 +346,26 @@ describe Api::V1::TestersController, type: :controller do
                 id: 2,
                 name: 'Tom'
               }.merge(product_serialized)
-            ]
-          }.to_json)
+            ].to_json)
+          end
         end
       end
     end
 
-    context 'associations' do
+    context 'associations', focus: true do
       it 'responds to associations' do
         FactoryGirl.create(:post)
         get :index, format: 'json', associations: ['post']
-        expect(response.body).to eq({
-          data: [
-            {
-              id: 1,
-              name: 'Mike'
-            }.merge(product_serialized).merge(post_serialized),
-            {
-              id: 2,
-              name: 'Tom'
-            }.merge(product_serialized).merge(post_serialized)
-          ]
-        }.to_json)
+        expect(response.body).to eq([
+          {
+            id: 1,
+            name: 'Mike'
+          }.merge(product_serialized).merge(post_serialized),
+          {
+            id: 2,
+            name: 'Tom'
+          }.merge(product_serialized).merge(post_serialized)
+        ].to_json)
       end
 
       context 'if validate_associations is true' do
@@ -345,18 +384,16 @@ describe Api::V1::TestersController, type: :controller do
           it 'does not throw an error' do
             allow(QuirkyApi).to receive(:validate_associations).and_return(nil)
             get :index, format: 'json', associations: ['octopus']
-            expect(response.body).to eq({
-              data: [
-                {
-                  id: 1,
-                  name: 'Mike'
-                }.merge(product_serialized),
-                {
-                  id: 2,
-                  name: 'Tom'
-                }.merge(product_serialized)
-              ]
-            }.to_json)
+            expect(response.body).to eq([
+              {
+                id: 1,
+                name: 'Mike'
+              }.merge(product_serialized),
+              {
+                id: 2,
+                name: 'Tom'
+              }.merge(product_serialized)
+            ].to_json)
           end
         end
       end
@@ -365,26 +402,24 @@ describe Api::V1::TestersController, type: :controller do
         it 'returns fields from an association' do
           FactoryGirl.create(:post)
           get :index, format: :json, associations: ['post'], post_fields: ['id']
-          expect(response.body).to eq({
-            data: [
-              {
-                id: 1,
-                name: 'Mike'
-              }.merge(product_serialized).merge(
-                post: {
-                  id: 1
-                }
-              ),
-              {
-                id: 2,
-                name: 'Tom'
-              }.merge(product_serialized).merge(
-                post: {
-                  id: 1
-                }
-              )
-            ]
-          }.to_json)
+          expect(response.body).to eq([
+            {
+              id: 1,
+              name: 'Mike'
+            }.merge(product_serialized).merge(
+              post: {
+                id: 1
+              }
+            ),
+            {
+              id: 2,
+              name: 'Tom'
+            }.merge(product_serialized).merge(
+              post: {
+                id: 1
+              }
+            )
+          ].to_json)
         end
       end
 
@@ -393,32 +428,30 @@ describe Api::V1::TestersController, type: :controller do
           FactoryGirl.create(:post)
           get :index, format: :json, associations: ['post'],
                       post_extra_fields: ['joke']
-          expect(response.body).to eq({
-            data: [
-              {
+          expect(response.body).to eq([
+            {
+              id: 1,
+              name: 'Mike'
+            }.merge(product_serialized).merge(
+              post: {
                 id: 1,
-                name: 'Mike'
-              }.merge(product_serialized).merge(
-                post: {
-                  id: 1,
-                  title: 'Hi',
-                  blurb: "What's up?",
-                  joke: 'Why was six afraid of seven?'
-                }
-              ),
-              {
-                id: 2,
-                name: 'Tom'
-              }.merge(product_serialized).merge(
-                post: {
-                  id: 1,
-                  title: 'Hi',
-                  blurb: "What's up?",
-                  joke: 'Why was six afraid of seven?'
-                }
-              )
-            ]
-          }.to_json)
+                title: 'Hi',
+                blurb: "What's up?",
+                joke: 'Why was six afraid of seven?'
+              }
+            ),
+            {
+              id: 2,
+              name: 'Tom'
+            }.merge(product_serialized).merge(
+              post: {
+                id: 1,
+                title: 'Hi',
+                blurb: "What's up?",
+                joke: 'Why was six afraid of seven?'
+              }
+            )
+          ].to_json)
         end
       end
 
@@ -427,40 +460,38 @@ describe Api::V1::TestersController, type: :controller do
           FactoryGirl.create(:post)
           get :index, format: :json, associations: ['post'],
                       post_associations: ['myself']
-          expect(response.body).to eq({
-            data: [
-              {
+          expect(response.body).to eq([
+            {
+              id: 1,
+              name: 'Mike'
+            }.merge(product_serialized).merge(
+              post: {
                 id: 1,
-                name: 'Mike'
-              }.merge(product_serialized).merge(
-                post: {
+                title: 'Hi',
+                blurb: "What's up?",
+                myself: {
                   id: 1,
                   title: 'Hi',
-                  blurb: "What's up?",
-                  myself: {
-                    id: 1,
-                    title: 'Hi',
-                    blurb: "What's up?"
-                  }
+                  blurb: "What's up?"
                 }
-              ),
-              {
-                id: 2,
-                name: 'Tom'
-              }.merge(product_serialized).merge(
-                post: {
+              }
+            ),
+            {
+              id: 2,
+              name: 'Tom'
+            }.merge(product_serialized).merge(
+              post: {
+                id: 1,
+                title: 'Hi',
+                blurb: "What's up?",
+                myself: {
                   id: 1,
                   title: 'Hi',
-                  blurb: "What's up?",
-                  myself: {
-                    id: 1,
-                    title: 'Hi',
-                    blurb: "What's up?"
-                  }
+                  blurb: "What's up?"
                 }
-              )
-            ]
-          }.to_json)
+              }
+            )
+          ].to_json)
         end
       end
     end
