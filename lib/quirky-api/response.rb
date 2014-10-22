@@ -42,6 +42,13 @@ module QuirkyApi
     #     }
     def respond_with(response, options = {})
       return if @performed_render
+
+      @api_response_envelope = if options.key?(:envelope)
+                                 options[:envelope]
+                               else
+                                 QuirkyApi.envelope
+                               end
+
       return render(json: envelope(nil)) if response.nil?
 
       # If there's an active model serializer to speak of, use it.
@@ -200,8 +207,8 @@ module QuirkyApi
     #
     # @return [Hash] The enveloped data, if applicable.
     def envelope(data)
-      return data if QuirkyApi.envelope.blank?
-      { QuirkyApi.envelope.to_s => data }
+      return data if @api_response_envelope.blank?
+      { @api_response_envelope.to_s => data }
     end
   end
 end
