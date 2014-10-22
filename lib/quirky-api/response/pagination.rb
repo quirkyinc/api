@@ -8,6 +8,7 @@ module QuirkyApi
       #                       overwrite pagination_options.
       #
       # @see pagination_options
+      #
       def paginate(objects, options = {})
         options = self.pagination_options.merge(options)
         unless objects.is_a?(Array)
@@ -17,6 +18,14 @@ module QuirkyApi
         end
       end
 
+      # Paginates data based on a cursor.
+      #
+      # @param objects [Array|Object] The object(s) to paginate.
+      # @param options [Hash] A hash of options that will overwrite
+      #                       +cursor_pagination_options+.
+      #
+      # @see cursor_pagination_options
+      #
       def paginate_with_cursor(objects, options = {})
         return [objects, nil] if objects.empty?
         options = cursor_pagination_options.merge(options)
@@ -60,6 +69,7 @@ module QuirkyApi
         }
       end
 
+      # Default options for cursor pagination.
       def cursor_pagination_options
         {
           per_page: params[:per_page] || 10,
