@@ -6,6 +6,11 @@ module QuirkyApi
     attr_accessor :validate_associations, :warn_invalid_fields, :auth_system,
                   :show_exceptions, :disable_stubs, :exception_handler,
                   :envelope
+
+    def has_auth_system?
+      auth_system.present? && auth_system.is_a?(Module)
+    end
+
     def configure
       yield(self)
     end
