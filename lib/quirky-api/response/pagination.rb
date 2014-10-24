@@ -87,7 +87,7 @@ module QuirkyApi
         if objects.previous_page
           link_headers << link_header(paginated_url(url, page: objects.previous_page), 'prev')
         end
-        if objects.total_pages != objects.next_page && objects.total_pages != options[:page].to_i
+        if objects.total_pages != options[:page].to_i
           link_headers << link_header(paginated_url(url, page: objects.total_pages), 'last')
         end
 
