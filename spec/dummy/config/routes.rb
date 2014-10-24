@@ -23,6 +23,12 @@ Dummy::Application.routes.draw do
           get 'with_arr_elements'
         end
       end
+
+      resources :posts do
+        collection do
+          get 'cursor'
+        end
+      end
     end
   end
 end

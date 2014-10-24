@@ -5,7 +5,7 @@ module QuirkyApi
       #
       # @param objects [Array|Object] The object(s) to paginate.
       # @param options [Hash] A hash of options that will
-      #                       overwrite pagination_options.
+      #                       overwrite +pagination_options+.
       #
       # @see pagination_options
       #
@@ -61,6 +61,60 @@ module QuirkyApi
         [objects, next_cursor]
       end
 
+      # Sets Hypermedia-style Link headers for a collection of paginated objects.
+      # See: https://developer.github.com/guides/traversing-with-pagination/
+      #
+      # @param objects [Object] A collection of objects that have been paginated by will_paginate.
+      # @param options [Hash] A hash of options that will overwrite +pagination_options+.
+      # @param options[:url] [Array] An array of URL options that will be passed to +polymorphic_url+.
+      #
+      # @see #pagination_options
+      # @see {http://api.rubyonrails.org/classes/ActionDispatch/Routing/PolymorphicRoutes.html#method-i-polymorphic_url polymorphic_url}
+      #
+      def pagination_headers(objects, options = {})
+        raise ArgumentError.new('options[:url] must be provided') unless options[:url]
+
+        options = self.pagination_options.merge(options)
+        url = options.delete(:url)
+        link_headers = []
+
+        if options[:page].to_i > 1
+          link_headers << link_header(paginated_url(url, page: 1), 'first')
+        end
+        if objects.next_page
+          link_headers << link_header(paginated_url(url, page: objects.next_page), 'next')
+        end
+        if objects.previous_page
+          link_headers << link_header(paginated_url(url, page: objects.previous_page), 'prev')
+        end
+        if objects.total_pages != options[:page].to_i
+          link_headers << link_header(paginated_url(url, page: objects.total_pages), 'last')
+        end
+
+        headers['Link'] = link_headers.join(', ') if link_headers.size
+        headers['Total'] = objects.total_entries.to_s
+      end
+
+      # Sets Hypermedia-style Link headers for a collection of cursor-based paginated objects.
+      #
+      # @param objects [Object] The unscoped object(s) to paginate. Do not pass the same set of objects returned by +paginate_with_cursor+, the total will not be calculated correctly using those.
+      # @param cursor [Integer] The cursor returned by +paginate_with_cursor+.
+      # @param options [Hash] A hash of options that will overwrite +pagination_options+.
+      # @param options[:url] [Array] An array of URL options that will be passed to +polymorphic_url+.
+      #
+      # @see #paginate_with_cursor
+      # @see {http://api.rubyonrails.org/classes/ActionDispatch/Routing/PolymorphicRoutes.html#method-i-polymorphic_url polymorphic_url}
+      #
+      def cursor_pagination_headers(objects, cursor, options = {})
+        raise ArgumentError.new('options[:url] must be provided') unless options[:url]
+
+        options = self.cursor_pagination_options.merge(options)
+        url = options.delete(:url)
+
+        headers['Link'] = link_header(paginated_url(url, cursor: cursor), 'next') if cursor
+        headers['Total'] = objects.count.to_s
+      end
+
       # Default options for pagination.
       def pagination_options
         {
@@ -77,6 +131,17 @@ module QuirkyApi
           reverse: false,
           ambiguous_field: nil
         }
+      end
+
+      private
+
+      def paginated_url(url, options = {})
+        exclude_params = options.keys + request.path_parameters.keys
+        polymorphic_url(url, params: params.except(*exclude_params).merge(options))
+      end
+
+      def link_header(url, rel)
+        "<#{url}>; rel=\"#{rel}\""
       end
     end
   end
