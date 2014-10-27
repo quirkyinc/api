@@ -43,6 +43,18 @@ module QuirkyApi
     def respond_with(response, options = {})
       return if @performed_render
 
+      if block_given?
+        options = response
+        response = if options[:expires_in] && options[:key]
+                 Rails.cache.fetch "#{options[:key]}-endpoint-data",
+                                   expires_in: options[:expires_in] do
+                   yield
+                 end
+               else
+                 yield
+               end
+      end
+
       @api_response_envelope = if options.key?(:envelope)
                                  options[:envelope]
                                else
