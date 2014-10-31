@@ -260,6 +260,11 @@ class QuirkySerializer < ::ActiveModel::Serializer
     super
   end
 
+  # There is an +options+ method somewhere in +ActiveModel::Serializer+ that
+  # prevents method named "options" from being called correctly.  This fixes
+  # that by removing the options scope.
+  undef_method(:options)
+
   # Ovewrwrites +ActiveModel::Serializer#serializable_hash# to allow inclusion
   # and exclusion of specific fields.
   #
