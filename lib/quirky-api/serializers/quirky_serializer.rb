@@ -194,11 +194,11 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
-  attr_accessor :params, :options, :current_user
+  attr_accessor :params, :current_user
   def initialize(object, options = {})
     # Ensure that we're passing around parameters and options.
     @params = options[:params] || {}
-    @options = options
+    @opts = options
     @current_user = options[:current_user]
 
     # Give the class access to the options too.
@@ -208,11 +208,11 @@ class QuirkySerializer < ::ActiveModel::Serializer
       sp = param.to_sym
 
       if val.is_a?(Array)
-        @options[sp] ||= []
-        @options[sp].concat val
-        @options[sp] = @options[sp].flatten.uniq
+        @opts[sp] ||= []
+        @opts[sp].concat val
+        @opts[sp] = @opts[sp].flatten.uniq
       else
-        @options[sp] = val
+        @opts[sp] = val
       end
     end
 
@@ -222,32 +222,32 @@ class QuirkySerializer < ::ActiveModel::Serializer
     @validations = self.class._validations
 
     [:fields, :only, :extra_fields, :associations].each do |field|
-      if @options[field].is_a? String
-        @options[field] = @options[field].split(',')
+      if @opts[field].is_a? String
+        @opts[field] = @opts[field].split(',')
       end
     end
 
-    if @options[:only].present? || @options[:fields].present?
-      fields = (@options[:only] || @options[:fields]).map(&:to_sym)
+    if @opts[:only].present? || @opts[:fields].present?
+      fields = (@opts[:only] || @opts[:fields]).map(&:to_sym)
       assoc_sect = fields & @associations
       if assoc_sect.present?
-        @options[:associations] ||= []
-        @options[:associations].concat assoc_sect
+        @opts[:associations] ||= []
+        @opts[:associations].concat assoc_sect
       end
 
       opt_sect = fields & @optional
       if opt_sect.present?
-        @options[:extra_fields] ||= []
-        @options[:extra_fields].concat opt_sect
+        @opts[:extra_fields] ||= []
+        @opts[:extra_fields].concat opt_sect
       end
     end
 
     # If we have default associations, join them to the requested ones.
     if self.class._default_associations.present?
-      @options[:associations] ||= []
-      @options[:associations].concat(self.class._default_associations || []) unless @options[:only].present?
+      @opts[:associations] ||= []
+      @opts[:associations].concat(self.class._default_associations || []) unless @opts[:only].present?
 
-      @options[:associations]
+      @opts[:associations]
         .map!(&:to_sym)
         .uniq!
     end
@@ -268,12 +268,12 @@ class QuirkySerializer < ::ActiveModel::Serializer
     attrs = self.class._attributes.dup.keys
 
     # Inclusive fields.
-    if @options[:only].present? || @options[:fields].present?
-      (@options[:only] ||= []).concat(@options[:fields] ||= [])
-      attrs = (attrs & @options[:only].map(&:to_sym))
+    if @opts[:only].present? || @opts[:fields].present?
+      (@opts[:only] ||= []).concat(@opts[:fields] ||= [])
+      attrs = (attrs & @opts[:only].map(&:to_sym))
     # Exclusive fields.
-    elsif @options[:exclude].present?
-      attrs = (attrs - @options[:exclude].map(&:to_sym))
+    elsif @opts[:exclude].present?
+      attrs = (attrs - @opts[:exclude].map(&:to_sym))
     end
 
     filter_attributes(attrs)
@@ -306,7 +306,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @return [Array] An array of valid optional fields.  Invalid fielsd will
   #                 throw a warning.
   def _optional
-    @optional & [*@options[:extra_fields]].map(&:to_sym)
+    @optional & [*@opts[:extra_fields]].map(&:to_sym)
   end
 
   # Returns requested associations.  This also validates the presence of
@@ -317,14 +317,14 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @raises InvalidAssociation
   # @returns [Array] An array of valid associations.
   def _associations
-    returned = @associations & [*@options[:associations]].map(&:to_sym)
+    returned = @associations & [*@opts[:associations]].map(&:to_sym)
 
     # Stop here unless we want to throw exceptions for bad associations.
     return returned unless QuirkyApi.validate_associations
 
     # Find invalid associations and throw an exception for them.
-    if returned.blank? || returned.length != [*@options[:associations]].length
-      ([*@options[:associations]].map(&:to_sym) - @associations).each do |assoc|
+    if returned.blank? || returned.length != [*@opts[:associations]].length
+      ([*@opts[:associations]].map(&:to_sym) - @associations).each do |assoc|
         fail InvalidAssociation,
              "The '#{assoc}' association does not exist."
       end
@@ -468,13 +468,13 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @see get_association
   # @return [Array] an array of fields, associations and optional fields.
   def sub_request_fields(key)
-    return unless @options[:"#{key}_fields"].present? ||
-                  @options[:"#{key}_associations"].present? ||
-                  @options[:"#{key}_extra_fields"].present?
+    return unless @opts[:"#{key}_fields"].present? ||
+                  @opts[:"#{key}_associations"].present? ||
+                  @opts[:"#{key}_extra_fields"].present?
 
-    sub_fields = [*@options[:"#{key}_fields"]]
-    sub_associations = [*@options[:"#{key}_associations"]]
-    sub_opt_fields = [*@options[:"#{key}_extra_fields"]]
+    sub_fields = [*@opts[:"#{key}_fields"]]
+    sub_associations = [*@opts[:"#{key}_associations"]]
+    sub_opt_fields = [*@opts[:"#{key}_extra_fields"]]
 
     [sub_fields, sub_associations, sub_opt_fields]
   end
