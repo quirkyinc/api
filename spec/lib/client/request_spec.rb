@@ -41,11 +41,11 @@ describe QuirkyApi::Request do
       allow_any_instance_of(QuirkyApi::Request).to receive(:build_opts).with(:get, '/auth', params: { email: 'test@example.com', pass: 'testing123' }).and_return(host: 'blah.com')
       r = double(:r, run: 'test')
       allow_any_instance_of(QuirkyApi::Request).to receive(:make_request).with(:get, host: 'blah.com').and_return(r)
-      allow_any_instance_of(QuirkyApi::Request).to receive(:parse_request).with('test').and_return(true)
+      allow_any_instance_of(QuirkyApi::Request).to receive(:parse_request).with('test', params: { email: 'test@example.com', pass: 'testing123' }).and_return(true)
 
       expect_any_instance_of(Object).to receive(:build_opts).with(:get, '/auth', { params: { email: 'test@example.com', pass: 'testing123' } }).and_return(host: 'blah.com')
       expect_any_instance_of(Object).to receive(:make_request).with(:get, { host: 'blah.com' }).and_return('test')
-      expect_any_instance_of(Object).to receive(:parse_request).with('test').and_return(true)
+      expect_any_instance_of(Object).to receive(:parse_request).with('test', params: { email: 'test@example.com', pass: 'testing123' }).and_return(true)
 
       request :get, '/auth', params: { email: 'test@example.com', pass: 'testing123' }
     end
@@ -121,7 +121,9 @@ describe QuirkyApi::Request do
             'X-Api-Client-Version' => QuirkyApi::Client::VERSION,
             'Content-Type'=>'application/json',
             'Accept'=>'application/json'
-          }
+          },
+          timeout: 5,
+          nosignal: true
         }
       )
       make_request :get, request_url: 'http://www.google.com'
@@ -139,7 +141,9 @@ describe QuirkyApi::Request do
             'X-Api-Client-Version' => QuirkyApi::Client::VERSION,
             'Content-Type'=>'application/json',
             'Accept'=>'application/json'
-          }
+          },
+          timeout: 5,
+          nosignal: true
         }
       )
       make_request :get, request_url: 'http://www.google.com', params: { name: 'Mike' }
@@ -156,7 +160,9 @@ describe QuirkyApi::Request do
             'Content-Type'=>'application/json',
             'Accept'=>'application/json',
             'X-App-Version' => '1.0.1'
-          }
+          },
+          timeout: 5,
+          nosignal: true
         }
       )
       make_request :get, request_url: 'http://www.google.com', headers: { 'X-App-Version' => '1.0.1' }
@@ -172,7 +178,9 @@ describe QuirkyApi::Request do
             'X-Api-Client-Version' => QuirkyApi::Client::VERSION,
             'Content-Type'=>'application/json',
             'Accept'=>'application/json'
-          }
+          },
+          timeout: 5,
+          nosignal: true
         }
       )
       make_request :get, request_url: 'http://www.google.com'
@@ -212,7 +220,7 @@ describe QuirkyApi::Request do
       res = double(:r, body: '{"data":{"name":"Test User","email":"test@example.com","blah":"asdf"}', success?: true)
 
       banana = QuirkyApi::User.new
-      response = banana.send(:parse_request, res)
+      response = banana.send(:parse_request, res, {})
       expect(response).to be_an_instance_of QuirkyApi::User
       expect(response.name).to eq 'Test User'
       expect(response.email).to eq 'test@example.com'
@@ -226,7 +234,7 @@ describe QuirkyApi::Request do
       res = double(:r, body: '{"data":[{"id":1,"name":"Test User","email":"test@example.com","blah":"asdf"},{"id":2,"name":"Test User","email":"test@example.com","blah":"asdf"}]}', success?: true)
 
       banana = QuirkyApi::User.new
-      response = banana.send(:parse_request, res)
+      response = banana.send(:parse_request, res, {})
       expect(response).to be_an_instance_of Array
       expect(response.length).to eq 2
 
@@ -245,7 +253,7 @@ describe QuirkyApi::Request do
       res = double(:r, body: '{"data":{"name":"Test User","email":"test@example.com","blah":"asdf"}', success?: false)
 
       banana = QuirkyApi::User.new
-      response = banana.send(:parse_request, res)
+      response = banana.send(:parse_request, res, {})
       expect(response).to be_an_instance_of QuirkyApi::User
       expect(response.name).to eq 'Test User'
       expect(response.email).to eq 'test@example.com'
@@ -258,7 +266,7 @@ describe QuirkyApi::Request do
     it 'returns errors if there are any' do
       res = double(:r, body: '{"errors": "Fail"}', success?: false)
       banana = QuirkyApi::User.new
-      response = banana.send(:parse_request, res)
+      response = banana.send(:parse_request, res, {})
       expect(response).to_not be_an_instance_of QuirkyApi::User
       expect(response).to eq({ 'errors' => 'Fail' })
 
