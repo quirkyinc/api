@@ -27,6 +27,7 @@ Dummy::Application.routes.draw do
       resources :posts do
         collection do
           get 'cursor'
+          get 'reverse_cursor'
         end
       end
     end

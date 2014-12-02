@@ -27,38 +27,57 @@ module QuirkyApi
       # @see cursor_pagination_options
       #
       def paginate_with_cursor(objects, options = {})
-        return [objects, nil] if objects.empty?
+        return [objects, nil, nil] if objects.empty?
+
         options = cursor_pagination_options.merge(options)
-        last_object_id = objects.last.id
+        last_id = objects.last.id
+
         if objects.is_a?(Array)
           start = objects.index { |obj| obj.id == options[:cursor].to_i }
-          objects = objects.slice(start, start + per_page)
+          paged_objects = objects.slice(start, start + per_page)
         else
           id_field = options[:ambiguous_field] ? options[:ambiguous_field] : 'id'
           if options[:reverse]
             predicate = '<='
-            options[:cursor] ||= objects.first.id
+            first_id = objects.first.id
           else
             predicate = '>='
-            options[:cursor] ||= 1
+            first_id = 1
           end
-          objects = objects.where("#{id_field} #{predicate} #{options[:cursor]}")
-          objects = objects.limit(options[:per_page]) if options[:per_page]
+
+          options[:cursor] ||= first_id
+
+          paged_objects = objects.where("#{id_field} #{predicate} #{options[:cursor]}")
+          paged_objects = paged_objects.limit(options[:per_page]) if options[:per_page]
+
+          # If the cursor option was not sent in, we are retrieving the first set, and the previous cursor is nil
+          # If the cursor option was sent in, we use that as the previous cursor, but will retrieve only objects
+          if (options[:cursor]) == first_id
+            prev_cursor = nil
+          else
+            previous_predicate = options[:reverse] ? '>' : '<'
+            previous_objects = objects.where("#{id_field} #{previous_predicate} #{options[:cursor]}").reverse_order
+            previous_objects = previous_objects.limit(options[:per_page]) if options[:per_page]
+            prev_cursor = previous_objects.last.try(:id)
+          end
         end
 
-        object_ids = objects.map(&:id).compact
+        object_ids = paged_objects.map(&:id).compact
 
         # If we are reverse sorting the objects, the cursor is the minimum id - 1 to point to the next object)
         # If we are sorting it regularly, the cursor is maximum id + 1 to point to the next object
+        # This works even when the max + 1 or min - 1 id is not present as we run a >= or <= operation when
+        # filtering records
         next_cursor = (options[:reverse] ? object_ids.min - 1 : object_ids.max + 1) rescue nil
 
         # If we have reached the last object, next_cursor should be nil
-        if options[:reverse] && next_cursor && next_cursor < last_object_id
+        if options[:reverse] && next_cursor && next_cursor < last_id
           next_cursor = nil
-        elsif !options[:reverse] && next_cursor && next_cursor > last_object_id
+        elsif !options[:reverse] && next_cursor && next_cursor > last_id
           next_cursor = nil
         end
-        [objects, next_cursor]
+
+        [paged_objects, next_cursor, prev_cursor]
       end
 
       # Sets Hypermedia-style Link headers for a collection of paginated objects.
@@ -105,13 +124,17 @@ module QuirkyApi
       # @see #paginate_with_cursor
       # @see {http://api.rubyonrails.org/classes/ActionDispatch/Routing/PolymorphicRoutes.html#method-i-polymorphic_url polymorphic_url}
       #
-      def cursor_pagination_headers(objects, cursor, options = {})
+      def cursor_pagination_headers(objects, next_cursor, prev_cursor = nil, options = {})
         raise ArgumentError.new('options[:url] must be provided') unless options[:url]
 
         options = self.cursor_pagination_options.merge(options)
         url = options.delete(:url)
 
-        headers['Link'] = link_header(paginated_url(url, cursor: cursor), 'next') if cursor
+        link_headers = []
+        link_headers << link_header(paginated_url(url, cursor: next_cursor), 'next') if next_cursor
+        link_headers << link_header(paginated_url(url, cursor: prev_cursor), 'prev') if prev_cursor
+
+        headers['Link'] = link_headers.join(', ') if !link_headers.empty?
         headers['Total'] = objects.count.to_s
       end
 
