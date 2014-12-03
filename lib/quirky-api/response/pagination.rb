@@ -117,14 +117,15 @@ module QuirkyApi
       # Sets Hypermedia-style Link headers for a collection of cursor-based paginated objects.
       #
       # @param objects [Object] The unscoped object(s) to paginate. Do not pass the same set of objects returned by +paginate_with_cursor+, the total will not be calculated correctly using those.
-      # @param cursor [Integer] The cursor returned by +paginate_with_cursor+.
-      # @param options [Hash] A hash of options that will overwrite +pagination_options+.
+      # @param next_cursor [Integer] The next_cursor returned by +paginate_with_cursor+.
+      # @param prev_cursor [Integer] The prev_cursor returned by +paginate_with_cursor+.
+      # @param options [Hash] A hash of options that will overwrite +cursor_pagination_options+.
       # @param options[:url] [Array] An array of URL options that will be passed to +polymorphic_url+.
       #
       # @see #paginate_with_cursor
       # @see {http://api.rubyonrails.org/classes/ActionDispatch/Routing/PolymorphicRoutes.html#method-i-polymorphic_url polymorphic_url}
       #
-      def cursor_pagination_headers(objects, next_cursor, prev_cursor = nil, options = {})
+      def cursor_pagination_headers(objects, next_cursor = nil, prev_cursor = nil, options = {})
         raise ArgumentError.new('options[:url] must be provided') unless options[:url]
 
         options = self.cursor_pagination_options.merge(options)
