@@ -695,6 +695,7 @@ Parameters:
   * `cursor`: the starting cursor from which to get records. Can be null.
   * `reverse`: boolean indicating whether the objects are sent in reverse order or not so the correct objects can be displayed next. Defaults to false.
   * `ambiguous_field`: This is used to indicate what field needs to be used for the querying. This is *required* in the case the queried collection has been joined with other tables. It is usually the `id` field of the primary table. E.g.: 'users.id'
+  * `field`: this is the field that the ordering / comparison needs to be done on the basis of. `date` and `id` are currently supported. Defaults to `id`.
 
 Returns a 3-tuple of `(paginated_objects, next_cursor, prev_cursor)`:
 - `paginated_objects`: The object limited by `per_page` based on the `cursor` provided

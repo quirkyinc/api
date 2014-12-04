@@ -1,6 +1,12 @@
 module QuirkyApi
   module Response
     module Pagination
+
+      FIRST_OBJECT_MAPPING = {
+        datetime: Time.local(2007,01,01).to_i,
+        integer: 1
+      }
+
       # Paginates data.
       #
       # @param objects [Array|Object] The object(s) to paginate.
@@ -30,39 +36,42 @@ module QuirkyApi
         return [objects, nil, nil] if objects.empty?
 
         options = cursor_pagination_options.merge(options)
-        last_id = objects.last.id
+        field_type = objects.klass.columns_hash[options[:field]].type
+        last = objects.last.send(options[:field])
 
         if objects.is_a?(Array)
-          start = objects.index { |obj| obj.id == options[:cursor].to_i }
+          start = objects.index { |obj| obj.send(options[:field]) == options[:cursor].to_i }
           paged_objects = objects.slice(start, start + per_page)
+          prev_cursor = [0, start - per_page].max
         else
-          id_field = options[:ambiguous_field] ? options[:ambiguous_field] : 'id'
+          id_field = options[:ambiguous_field] ? options[:ambiguous_field] : options[:field]
           if options[:reverse]
             predicate = '<='
-            first_id = objects.first.id
+            first = objects.first.send(options[:field])
           else
             predicate = '>='
-            first_id = 1
+            first = FIRST_OBJECT_MAPPING[field_type]
           end
+          options[:cursor] ||= first.to_i
 
-          options[:cursor] ||= first_id
+          # If the cursor is a date type, then convert it back into a date for comparison
+          options[:cursor] = DateTime.strptime("#{options[:cursor]}", '%s') if field_type == ('datetime'.to_sym)
 
-          paged_objects = objects.where("#{id_field} #{predicate} #{options[:cursor]}")
+          paged_objects = objects.where("#{id_field} #{predicate} :cursor", {cursor: options[:cursor]})
           paged_objects = paged_objects.limit(options[:per_page]) if options[:per_page]
 
           # If the cursor option was not sent in, we are retrieving the first set, and the previous cursor is nil
           # If the cursor option was sent in, we use that as the previous cursor, but will retrieve only objects
-          if (options[:cursor]) == first_id
+          if (options[:cursor]) == first
             prev_cursor = nil
           else
             previous_predicate = options[:reverse] ? '>' : '<'
-            previous_objects = objects.where("#{id_field} #{previous_predicate} #{options[:cursor]}").reverse_order
+            previous_objects = objects.where("#{id_field} #{previous_predicate} :cursor", {cursor: options[:cursor]}).reverse_order
             previous_objects = previous_objects.limit(options[:per_page]) if options[:per_page]
-            prev_cursor = previous_objects.last.try(:id)
+            prev_cursor = previous_objects.last.send(options[:field])
           end
         end
-
-        object_ids = paged_objects.map(&:id).compact
+        object_ids = paged_objects.map(&options[:field].to_sym).compact
 
         # If we are reverse sorting the objects, the cursor is the minimum id - 1 to point to the next object)
         # If we are sorting it regularly, the cursor is maximum id + 1 to point to the next object
@@ -71,10 +80,15 @@ module QuirkyApi
         next_cursor = (options[:reverse] ? object_ids.min - 1 : object_ids.max + 1) rescue nil
 
         # If we have reached the last object, next_cursor should be nil
-        if options[:reverse] && next_cursor && next_cursor < last_id
+        if options[:reverse] && next_cursor && next_cursor < last
           next_cursor = nil
-        elsif !options[:reverse] && next_cursor && next_cursor > last_id
+        elsif !options[:reverse] && next_cursor && next_cursor > last
           next_cursor = nil
+        end
+
+        if field_type == ('datetime'.to_sym)
+          prev_cursor = prev_cursor.to_i unless prev_cursor.nil?
+          next_cursor = next_cursor.to_i unless next_cursor.nil?
         end
 
         [paged_objects, next_cursor, prev_cursor]
@@ -153,7 +167,8 @@ module QuirkyApi
           per_page: params[:per_page] || 10,
           cursor: params[:cursor],
           reverse: false,
-          ambiguous_field: nil
+          ambiguous_field: nil,
+          field: 'id'
         }
       end
 
