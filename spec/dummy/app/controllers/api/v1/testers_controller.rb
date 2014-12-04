@@ -11,6 +11,12 @@ class Api::V1::TestersController < QuirkyApi::Base
     # Intentionally left blank for error testing.
   end
 
+  def with_cache_serialized
+    respond_with(cache_key: 'banana') do
+      serialize(Tester.last)
+    end
+  end
+
   def with_status
     respond_with 'status', status: 201
   end

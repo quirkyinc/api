@@ -21,6 +21,7 @@ Dummy::Application.routes.draw do
           get 'with_bool_elements'
           get 'with_string_elements'
           get 'with_arr_elements'
+          get 'with_cache_serialized'
         end
       end
 

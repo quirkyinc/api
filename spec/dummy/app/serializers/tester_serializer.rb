@@ -11,7 +11,7 @@ class TesterSerializer < QuirkySerializer
   end
 
   def product
-    Product.last
+    Product.all
   end
 
   def post

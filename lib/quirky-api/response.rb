@@ -40,20 +40,8 @@ module QuirkyApi
     #           "last": "Sea"
     #         }
     #     }
-    def respond_with(response, options = {})
+    def respond_with(response, options = {}, &block)
       return if @performed_render
-
-      if block_given?
-        options = response
-        response = if options[:expires_in] && options[:key]
-                 Rails.cache.fetch "#{options[:key]}-endpoint-data",
-                                   expires_in: options[:expires_in] do
-                   yield
-                 end
-               else
-                 yield
-               end
-      end
 
       @api_response_envelope = if options.key?(:envelope)
                                  options[:envelope]
@@ -61,12 +49,52 @@ module QuirkyApi
                                  QuirkyApi.envelope
                                end
 
+      if block_given?
+        options = response
+
+        # Rails seems to have an issue with caching large objects +.as_json+.
+        # As a result, we need to actively transform the output +.to_json+ in
+        # order to properly cache it and not completely screw up the output.
+        if options[:cache_key].present?
+          # +expires_in+ is an optional setting for caches, so it's optional
+          # here, too.
+          cache_opts = {}
+          cache_opts[:expires_in] = options[:expires_in] if options[:expires_in].present?
+
+          # Use this option if you want to serialize your data automatically.
+          options[:serialize] = false if options[:serialize].nil?
+
+          cache_key = "#{options[:cache_key]}-api-endpoint"
+          response = Rails.cache.fetch cache_key, cache_opts do
+            data = if options[:serialize]
+                     serialize(block.call)
+                   else
+                     block.call
+                   end
+
+            append_meta(envelope(data), options).to_json
+          end
+
+          renderable = { json: response }
+          renderable[:status] = options[:status] if options[:status].present?
+
+          render renderable
+          return
+        else
+          response = yield
+        end
+      end
+
+      # Make sure we serialize unless otherwise specified.
+      options[:serialize] = true if options[:serialize].nil?
+
       return render(json: envelope(nil)) if response.nil?
 
       # If there's an active model serializer to speak of, use it.
       # Otherwise, just render what we've got.
       data = if response.respond_to?(:active_model_serializer) &&
-                response.try(:active_model_serializer).present?
+                response.try(:active_model_serializer).present? &&
+                options[:serialize] == true
 
                options[:params] = params
                options[:current_user] = current_user if defined? current_user
@@ -76,26 +104,47 @@ module QuirkyApi
                  serializer = QuirkyArraySerializer
                end
 
-               @res = serializer.new(response, options)
-               envelope(@res.as_json(root: false))
+               @serialized_data = serializer.new(response, options)
+               envelope(@serialized_data.as_json(root: false))
              else
                envelope(response)
              end
 
-      # Check for warnings if applicable.
-      if !@res.blank? && QuirkyApi.warn_invalid_fields && data.is_a?(Hash)
-        warnings = @res.warnings(params)
-        data[:warnings] = warnings if warnings.present?
-      end
-
-      if data.is_a?(Hash) && options[:elements].present?
-        data.merge!(options[:elements])
-      end
+      data = append_meta(data, options)
 
       renderable = { json: data }
       renderable[:status] = options[:status] if options[:status].present?
 
       render renderable
+    end
+
+    # <tt>append_meta</tt> automatically appends additioanl meta information to
+    # the JSON response.  Options include:
+    #
+    #   - +warnings+ are issues that the serializer encountered while
+    #     serializing the object(s).  +warnings+ are usually syntax errors
+    #     or incorrect field names, and will not adversely affect the response.
+    #
+    #   - +elements+ are top level keys that live outside of the 'envelope', if
+    #     configured.  +elements+ must be passed as a hash.
+    #
+    # Both warnings and elements will *only* show up if the response is a hash.
+    # They do not know how to react if the response is an array (e.g., if there
+    # is no 'envelope' configured.)
+    def append_meta(data, options)
+      return data unless data.is_a?(Hash)
+
+      # Check for warnings if applicable.
+      if QuirkyApi.warn_invalid_fields
+        if @serialized_data.present?
+          warnings = @serialized_data.warnings(params)
+          data[:warnings] = warnings if warnings.present?
+        end
+      end
+
+      data.merge!(options[:elements]) if options[:elements].present?
+
+      data
     end
 
     # <tt>respond_as_json</tt> is the direct connection between API endpoints

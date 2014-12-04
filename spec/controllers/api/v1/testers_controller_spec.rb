@@ -36,10 +36,10 @@ describe Api::V1::TestersController, type: :controller do
 
     it 'returns one' do
       get :as_one, format: :json
-      expect(response.body).to eq({ id: 1, name: 'Tester', product: nil }.to_json)
+      expect(response.body).to eq({ id: 1, name: 'Tester', product: [] }.to_json)
     end
 
-    it_behaves_like 'a wrappable endpoint', { id: 1, name: 'Tester', product: nil }.to_json, 'get', 'as_one'
+    it_behaves_like 'a wrappable endpoint', { id: 1, name: 'Tester', product: [] }.to_json, 'get', 'as_one'
   end
 
   describe 'GET #as_true' do
@@ -127,10 +127,10 @@ describe Api::V1::TestersController, type: :controller do
     before { @tester = FactoryGirl.create(:tester, name: 'Tester', last_name: 'Atqu') }
     it 'returns an array with one element' do
       get :single_as_arr, format: 'json'
-      expect(response.body).to eq([{ id: 1, name: 'Tester', product: nil }].to_json)
+      expect(response.body).to eq([{ id: 1, name: 'Tester', product: [] }].to_json)
     end
 
-    it_behaves_like 'a wrappable endpoint', [{ id: 1, name: 'Tester', product: nil }].to_json, 'get', 'single_as_arr'
+    it_behaves_like 'a wrappable endpoint', [{ id: 1, name: 'Tester', product: [] }].to_json, 'get', 'single_as_arr'
   end
 
   describe 'GET #errors' do
@@ -222,6 +222,81 @@ describe Api::V1::TestersController, type: :controller do
     end
   end
 
+  describe 'GET #with_cache_serialized' do
+    before { @tester = FactoryGirl.create(:tester, name: 'Tester', last_name: 'Atqu') }
+    it 'caches a response' do
+      allow(Rails).to receive_message_chain(:cache, :fetch).and_return('testing cache')
+      expect(Rails).to receive_message_chain(:cache, :fetch).with('banana-api-endpoint', {})
+
+      get :with_cache_serialized
+      expect(response.body).to eq('testing cache')
+    end
+
+    it 'returns a cached version if it already exists' do
+      Rails.cache.write('banana-api-endpoint', 'different response')
+      get :with_cache_serialized
+      expect(response.body).to eq('different response')
+    end
+
+    it 'writes cache only once' do
+      allow(controller).to receive(:append_meta).and_return('testing')
+      expect(controller).to receive(:append_meta)
+      get :with_cache_serialized
+      expect(response.body).to eq('testing'.to_json)
+
+      expect(controller).to_not receive(:append_meta)
+      get :with_cache_serialized
+      expect(response.body).to eq('testing'.to_json)
+    end
+
+    it 'correctly shows associations' do
+      @product = FactoryGirl.create_list(:product, 2, created_at: Time.parse('Jan 1, 2015'), updated_at: Time.parse('Jan 1, 2015'))
+      get :with_cache_serialized
+      expect(response.body).to eq({
+        id: 1,
+        name: 'Tester',
+        product: [
+          {
+            id: 1,
+            name: 'blah',
+            desc: 'so on',
+            created_at: '2015-01-01T05:00:00.000Z',
+            updated_at: '2015-01-01T05:00:00.000Z'
+          },
+          {
+            id: 2,
+            name: 'blah',
+            desc: 'so on',
+            created_at: '2015-01-01T05:00:00.000Z',
+            updated_at: '2015-01-01T05:00:00.000Z'
+          }
+        ]
+      }.to_json)
+
+      get :with_cache_serialized
+      expect(response.body).to eq({
+        id: 1,
+        name: 'Tester',
+        product: [
+          {
+            id: 1,
+            name: 'blah',
+            desc: 'so on',
+            created_at: '2015-01-01T05:00:00.000Z',
+            updated_at: '2015-01-01T05:00:00.000Z'
+          },
+          {
+            id: 2,
+            name: 'blah',
+            desc: 'so on',
+            created_at: '2015-01-01T05:00:00.000Z',
+            updated_at: '2015-01-01T05:00:00.000Z'
+          }
+        ]
+      }.to_json)
+    end
+  end
+
   describe 'GET #with_elements' do
     context 'with an envelope' do
       before do
@@ -288,13 +363,15 @@ describe Api::V1::TestersController, type: :controller do
     # It is also a default_association so should always show up.
     let(:product_serialized) do
       {
-        product: {
-          id: @product.id,
-          name: @product.name,
-          desc: @product.desc,
-          created_at: @product.created_at,
-          updated_at: @product.updated_at
-        }
+        product: [
+          {
+            id: @product.id,
+            name: @product.name,
+            desc: @product.desc,
+            created_at: @product.created_at,
+            updated_at: @product.updated_at
+          }
+        ]
       }
     end
 
