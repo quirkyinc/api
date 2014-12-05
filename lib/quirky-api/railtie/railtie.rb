@@ -27,6 +27,12 @@ module QuirkyApi
         headers['Quirky-Cookie'] = request.cookie_jar[:_quirky_auth]
       end
 
+      if request.headers['X-Original-Request-Id']
+        headers['X-Original-Request-Id'] = request.headers['X-Original-Request-Id']
+      elsif request.uuid
+        headers['X-Original-Request-Id'] = request.uuid
+      end
+
       QuirkyApi::Client.prepend_headers(headers)
 
       @app.call(env)
