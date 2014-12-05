@@ -10,8 +10,16 @@ class Api::V1::PostsController < QuirkyApi::Base
   end
 
   def cursor
-    @posts, @cursor = paginate_with_cursor(Post.all)
-    cursor_pagination_headers(Post.all, @cursor, url: [:api, :v1, :posts])
+    posts = Post.order('id').all
+    @posts, @next_cursor, @prev_cursor = paginate_with_cursor(posts)
+    cursor_pagination_headers(posts, @next_cursor, @prev_cursor, url: [:api, :v1, :posts])
+    respond_with @posts
+  end
+
+  def reverse_cursor
+    posts = Post.order('id DESC').all
+    @posts, @next_cursor, @prev_cursor = paginate_with_cursor(posts, reverse: true)
+    cursor_pagination_headers(posts, @next_cursor, @prev_cursor, url: [:api, :v1, :posts])
     respond_with @posts
   end
 end

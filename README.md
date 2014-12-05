@@ -33,6 +33,9 @@
     - [`api_host`](#api_host)
     - [`api_endpoint`](#api_endpoint)
     - [Virtus model](#virtus-model)
+- [QuirkyApi::Response::Pagination](#quirkyapiresponsepagination)
+  - [`paginate_with_cursor`](#paginate_with_cursor)
+  - [`cursor_pagination_headers`](#cursor_pagination_headers)
 
 ## Explanation
 
@@ -674,3 +677,42 @@ attribute :attribute_name, ClassDistinction
 ```
 
 In the above example, notice that `:attribute_name` is the name of the attribute and `ClassDistinction` is a representation of the class that the attribute's value should be.  So, `:id` is an `Integer`, and `:email` is a `String`.  Any valid type class is acceptable.
+
+# QuirkyApi::Response::Pagination
+
+## Explanation
+
+The `QuirkyApi::Response::Pagination` is a library that provides various pagination utilities to paginate responses.
+
+### `paginate_with_cursor`
+
+`paginate_with_cursor` paginates the collection or array sent as a parameter and provides the paginated objects, next_cursor and prev_cursor.
+
+Parameters:
+- Objects (Array or collection of objects that need to be paginated)
+- Options (hash): A hash of options that will overwrite `cursor_pagination_options`. Possible options are:
+  * `per_page`: number of items required per page. Defaults to 10.
+  * `cursor`: the starting cursor from which to get records. Can be null.
+  * `reverse`: boolean indicating whether the objects are sent in reverse order or not so the correct objects can be displayed next. Defaults to false.
+  * `ambiguous_field`: This is used to indicate what field needs to be used for the querying. This is *required* in the case the queried collection has been joined with other tables. It is usually the `id` field of the primary table. E.g.: 'users.id'
+  * `field`: this is the field that the ordering / comparison needs to be done on the basis of. `date` and `id` are currently supported. Defaults to `id`.
+
+Returns a 3-tuple of `(paginated_objects, next_cursor, prev_cursor)`:
+- `paginated_objects`: The object limited by `per_page` based on the `cursor` provided
+- `next_cursor`: The cursor indicating the starting point of the next page (if one exists). Send it back to the request if you want to get the next page.
+- `prev_cursor`: The cursor indicuting the staarting point of the previous page (if one exists). Send it back to the request if you want to get the previous page.
+
+### `cursor_pagination_headers`
+
+This method sets Hypermedia-style link headers for a collection of cursor-based paginated objects. See [Github Pagination](https://developer.github.com/guides/traversing-with-pagination/#basics-of-pagination)
+
+Parameters:
+- Objects: The unscoped object(s) to paginate. Do not pass the same set of objects returned by +paginate_with_cursor+, the total will not be calculated correctly using those.
+- Next Cursor: The next_cursor returned by `paginate_with_cursor`.
+- Previous Cursor: The prev_cursor returned by `paginate_with_cursor`.
+- Options (hash): A hash of options that will overwrite `cursor_pagination_options`.
+  * `url`: An array of URL options that will be passed to [polymorphic_url](http://api.rubyonrails.org/classes/ActionDispatch/Routing/PolymorphicRoutes.html#method-i-polymorphic_url polymorphic_url).
+
+Returns:
+- Response Headers with the Link Attribute: E.g. Link: <https://quirky.com/api/v1/users?per_page=5&cursor=3847>; rel="next",
+  <https://quirky.com/api/v1/users?per_page=5&cursor=1007>; rel="prev"
