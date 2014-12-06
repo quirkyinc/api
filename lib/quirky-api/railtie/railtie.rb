@@ -28,7 +28,11 @@ module QuirkyApi
       end
 
       if request.headers['X-Original-Request-Id']
-        headers['X-Original-Request-Id'] = request.headers['X-Original-Request-Id']
+        if request.uuid
+          headers['X-Original-Request-Id'] = "#{request.uuid} #{request.headers['X-Original-Request-Id']}"
+        else
+          headers['X-Original-Request-Id'] = request.headers['X-Original-Request-Id']
+        end
       elsif request.uuid
         headers['X-Original-Request-Id'] = request.uuid
       end
