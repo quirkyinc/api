@@ -250,7 +250,7 @@ describe Api::V1::TestersController, type: :controller do
     end
 
     it 'correctly shows associations' do
-      @product = FactoryGirl.create_list(:product, 2, created_at: Time.parse('Jan 1, 2015'), updated_at: Time.parse('Jan 1, 2015'))
+      @product = FactoryGirl.create_list(:product, 2, created_at: Time.parse('Jan 1, 2015 00:00:00 UTC'), updated_at: Time.parse('Jan 1, 2015 00:00:00 UTC'))
       get :with_cache_serialized
       expect(response.body).to eq({
         id: 1,
@@ -260,15 +260,15 @@ describe Api::V1::TestersController, type: :controller do
             id: 1,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T05:00:00.000Z',
-            updated_at: '2015-01-01T05:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000Z',
+            updated_at: '2015-01-01T00:00:00.000Z'
           },
           {
             id: 2,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T05:00:00.000Z',
-            updated_at: '2015-01-01T05:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000Z',
+            updated_at: '2015-01-01T00:00:00.000Z'
           }
         ]
       }.to_json)
@@ -282,15 +282,15 @@ describe Api::V1::TestersController, type: :controller do
             id: 1,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T05:00:00.000Z',
-            updated_at: '2015-01-01T05:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000Z',
+            updated_at: '2015-01-01T00:00:00.000Z'
           },
           {
             id: 2,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T05:00:00.000Z',
-            updated_at: '2015-01-01T05:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000Z',
+            updated_at: '2015-01-01T00:00:00.000Z'
           }
         ]
       }.to_json)
