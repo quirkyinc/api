@@ -23,23 +23,13 @@
   - [`serialize` helper method](#serialize-helper-method)
   - [Manual serialization](#manual-serialization)
   - [Array serialization](#array-serialization)
-- [QuirkyApi::Client](#quirkyapiclient)
-  - [Explanation](#client-explanation)
-  - [Usage](#client-usage)
-    - [Available helpers](#available-helpers)
-    - [Custom request methods](#custom-request-methods)
-  - [Security](#security)
-  - [Client models](#client-models)
-    - [`api_host`](#api_host)
-    - [`api_endpoint`](#api_endpoint)
-    - [Virtus model](#virtus-model)
 - [QuirkyApi::Response::Pagination](#quirkyapiresponsepagination)
   - [`paginate_with_cursor`](#paginate_with_cursor)
   - [`cursor_pagination_headers`](#cursor_pagination_headers)
 
 ## Explanation
 
-The `quirky-api` gem provides a library of useful tools and methods to help make API development easier.  It also provides a client that interacts with the actual Quirky API.
+The `quirky-api` gem provides a library of useful tools and methods to help make API development easier. 
 
 All functionality is automatically included by adding `quirky-api` to your Gemfile:
 
@@ -271,7 +261,6 @@ class ModelNameSerializer < QuirkySerializer
   end
 end
 ```
-
 
 ### Attributes
 
@@ -510,173 +499,6 @@ The same options that apply to object serialization apply to `QuirkyArraySeriali
 ```ruby
 @user = QuirkyArraySerializer.new(User.all, only: [:id, :name]).as_json(root: false)
 ```
-
-# QuirkyApi::Client
-
-## Client explanation
-
-The `QuirkyApi::Client` is a library that communicates with Quirky APIs across each applications.  It generates secure, signed requests and handles responses with pseudo models.
-
-`QuirkyApi::Client` is automatically available with the `quirky-api` gem.
-
-## Client Usage
-
-Instantiate the `QuirkyApi::Client` class and make a request for a particular model:
-
-```ruby
-client = QuirkyApi::Client.new
-client.users.find(1) # Will make a request to fetch user 1.
-```
-
-The model name should always be lowercase and pluralized.  Good examples are: `users`, `products`, `inventions`.
-
-### Available helpers
-
-There are several helpers available in typical client requests:
-
-- `model.list` (`GET #{api_endpoint}`) will hit the "index" endpoint, which should return an array of (model)s.
-- `model.find(ID)` (`GET #{api_endpoint}/#{ID}`) will find a single (model) based on the specified ID.
-- `model.find_batches([IDS])` (`GET #{api_endpoint}/#{IDS.join(',')}`) will find several (models) that have IDs that match (IDS).
-- `model.create(ATTRS)` (`POST #{api_endpoint}`) will attempt to create an instance of (model).
-- `model.create!(ATTRS)` (`POST #{api_endpoint}`) will attempt to create an instance of (model).  It will raise errors if something goes wrong.
-- `model.update(ID, ATTRS)` (`PUT #{api_endpoint}/#{ID}`) will update the (model) specified by (ID), passing (ATTRS).
-- `model.update!(ID, ATTRS)` (`PUT #{api_endpoint}/#{ID}`) will update the (model) specified by (ID), passing (ATTRS).  It will raise errors if something goes wrong.
-- `model.destroy(ID)` (`DELETE #{api_endpoint}/#{ID}`) will delete the (model) specified by (ID).
-- `model.destroy!(ID)` (`DELETE #{api_endpoint}/#{ID}`) will delete the (model) specified by (ID).  It will raise errors if something goes wrong.
-
-**Note**: You may pass custom parameters to any of these helpers as a first parameter (for `list` and `create`) or a second parameter (for `find`, `find_batches,`, `update`, `destroy`).  Parameters may be passed like so:
-
-```ruby
-client = QuirkyApi::Client.new
-client.users.list(per_page: 10)
-```
-
-### Custom request methods
-
-`QuirkyApi::Client` also provides `get`, `post`, `put` and `delete` helpers.  In API models, you can create custom request methods with those helpers to do unique operations outside of the "available helpers" described above:
-
-```ruby
-class QuirkyApi::User < Client
-  # ...
-  def authenticate(username, password)
-    post '/authenticate', params: { username: username, password: password }
-  end
-end
-```
-
-Notice the simple execution of this.  Parsing happens automatically.  Note that you must pass params as a hash under a `params` key.
-
-The above custom method would be used like this:
-
-```ruby
-client = QuirkyApi::Client.new
-client.users.authenticate('test@example.com', 'pass123')
-```
-
-Response parsing happens automatically.  The result of the above would request would be an instance of `QuirkyApi::User`.
-
-## Security
-
-`QuirkyApi::Client` signs requests with the app-specific client secret before making the actaul request.  When a request is received and recognized as a client request (which happens automatically), the receiving server generates a signed string from the request it receives.  If for some reason the signed string on the receiving server does not match the one in the request, the request will fail with errors.
-
-Signed requests are completely transparent in the `QuirkyApi::Client`.  On every request, regardless if they are custom or generic, everything is signed.
-
-## Client models
-
-Client models help parse responses by providing a default 'template' for the response.  When a request is made to a different server and the response is successful, the `QuirkyApi::Client` fills in the model used to make the request with the values of the response.
-
-As an example, if you make a request to find user 1:
-
-
-```ruby
-client = QuirkyApi::Client.new
-client.users.find(1)
-# => #<QuirkyApi::User:0x00000103b74338 @id=1, @name="First1 Last1", @email="anon-1@example.net", ....>
-```
-
-...Then `QuirkyApi::Client` automatically knows that it's dealing with the `User` model.  The result of the above request, then, would be an instance of `QuirkyApi::User`.
-
-  There is a file called `lib/quirky-api/client/user.rb` which contains the user model:
-
-```ruby
-module QuirkyApi
-  # User model, found on QC at /api/v2/users.
-  class User < Client
-    api_host :qc
-    api_endpoint '/api/v2/users'
-
-    include Virtus.model
-
-    # !@attribute [rw] id
-    #   @return [Integer] the user's id on Quirky Classic
-    attribute :id, Integer
-
-    # !@attribute [rw] name
-    #   @return [String] the user's name on Quirky Classic
-    attribute :name, String
-
-    # !@attribute [rw] email
-    #   @return [String] the user's email on Quirky Classic
-    attribute :email, String
-
-    # so on...
-  end
-end
-```
-
-The user model breaks down what request should be made, to where, and what attributes to expect in the response.
-
-### `api_host`
-
-`api_host` defines what host to make the request to.  Current options are `:qc`, `:qtip` and `:auth`.
-
-The `QuirkyApi::Client` figures out what the actual host is by getting the result of `config.#{api_host}_host`.  For example, if `api_host` is `:qc`, then the value of it will be `config.qc_host`, which will in turn be `http://localhost:3000`.
-
-When a request is made, `QuirkyApi::Client` automatically gets the host as described.  The host, combined with minor logic behind `api_endpoint` as explained below, helps to generate the final request.
-
-### `api_endpoint`
-
-`api_endpoint` is the base controller endpoint, on the `api_host`, upon which to make requests.  `QuirkyApi::Client` has logic to mutate the `api_endpoint` string appropriately depending on what sort of request you are making.  Therefore, the value of `api_endpoint` should always end with just the controller name and no leading slash:
-
-```ruby
-api_endpoint '/api/v2/users'
-```
-
-#### Endpoint mutation
-
-As already stated, the client has logic to mutate the endpoint as appropriate to the specific request you're making.  `list` and `create` will make a request to the endpoint, only needing to change the request method:
-
-```ruby
-client.users.list
-# GET /api/v2/users
-
-client.users.create(name: 'Mike', email: 'test@example.com')
-# POST /api/v2/users
-```
-
-`find`, `update` and `destroy` will automatically append the ID you specify to the `api_endpoint` value, and use the appropriate request method:
-
-
-```ruby
-client.users.find(1)
-# GET /api/v2/users/1
-
-client.users.update(1, name: 'Tom')
-# PUT /api/v2/users/1
-
-cilent.users.destroy(1)
-# DELETE /api/v2/users/1
-```
-
-### Virtus model
-
-[virtus](https://github.com/solnic/virtus) is a gem that helps define classes as "pseudo" models of sorts.  Be sure to `include Virtus.model` and specify each attribute in the format of:
-
-```ruby
-attribute :attribute_name, ClassDistinction
-```
-
-In the above example, notice that `:attribute_name` is the name of the attribute and `ClassDistinction` is a representation of the class that the attribute's value should be.  So, `:id` is an `Integer`, and `:email` is a `String`.  Any valid type class is acceptable.
 
 # QuirkyApi::Response::Pagination
 
