@@ -141,7 +141,7 @@ module QuirkyApi
       #
       # @param errors [Object] An errors object that will be 'translated'.
       #
-      def translate_errors(errors)
+      def translate_errors(errors, prepend_string = nil)
         # Gets the model that has the errors.
         model = errors.instance_variable_get('@base')
 
@@ -154,7 +154,18 @@ module QuirkyApi
                            error
                          else
                            col = model.class.human_attribute_name(key)
-                           "#{col} #{error}"
+                           str = ''
+
+                           if prepend_string
+                             unless prepend_string.blank?
+                               str += "#{prepend_string} "
+                             end
+                           else
+                             str += "#{col} "
+                           end
+
+                           str += error
+                           str.capitalize
                          end
 
           (hsh[key] ||= []) << full_message
