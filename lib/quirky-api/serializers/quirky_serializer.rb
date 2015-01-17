@@ -419,6 +419,10 @@ class QuirkySerializer < ::ActiveModel::Serializer
                  fail InvalidField, "#{field} could not be found"
                end
 
+    if response.respond_to?(:serializable_hash)
+      response = response.serializable_hash
+    end
+
     if _cached?(field)
       _set_cached_field(field, response)
     else
