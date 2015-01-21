@@ -353,7 +353,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     key = data.to_s
 
     begin
-      data = get_field(data)
+      data = get_field(data, false)
     rescue InvalidField => e
       if QuirkyApi.validate_associations
         raise InvalidAssociation,
@@ -402,11 +402,16 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # object respond to the method, raises an +InvalidField+ exception.
   #
   # @param field [String|Symbol] The attribute to get the value for.
+  # @param serialize [Boolean]   +get_field+ will attempt to return the
+  #                              +serializable_hash+ for any object that is
+  #                              returned for a certain attribute.  If this
+  #                              is not desirable behavior (say, for
+  #                              associations), set this to false.
   #
   # @return [Mixed] Either the value of the attribute, or +InvalidField+ if
   #                 neither the serializer nor the object responds to the
   #                 assumed method.
-  def get_field(field)
+  def get_field(field, serialize = true)
     if _cached?(field)
       return _cached_field(field) if _in_cache?(field)
     end
@@ -419,7 +424,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
                  fail InvalidField, "#{field} could not be found"
                end
 
-    if response.respond_to?(:serializable_hash)
+    if response.respond_to?(:serializable_hash) && serialize
       response = response.serializable_hash
     end
 
