@@ -1,6 +1,5 @@
 # encoding: utf-8
 
-
 class InvalidField < StandardError ; end
 
 # QuirkySerializer is Quirky's base serializer, providing functionality
@@ -115,6 +114,60 @@ class QuirkySerializer < ::ActiveModel::Serializer
       self._validations[attribute] = (validation.present? ? validation : block)
     end
 
+    # This allows you to cache certain fields within a serializer.  The issue
+    # with caching an entire serialized object is that of persistence --
+    # a lot of things change, all the time, making it very difficult to cache
+    # an entire object and ensure the correct responses.
+    #
+    # quirky-api takes a per-field approach to caching.  When an object is
+    # serialized, every field is configured to be cached will be cached
+    # invididually, allowing for more fine-grained caching abilities.  Each
+    # field has a cache key like so:
+    #
+    #    [object_id].[updated_at]/[field_name]
+    #
+    # Therefore, making changes to the overlying object will automatically
+    # bust the cache for the serialized object and return the new information.
+    #
+    # +caches+ allows multiple arguments, and may be passed any or all of the
+    # following:
+    #
+    #  * +:all+ will cache every field on the object, including attributes,
+    #    optional fields and associations.
+    #  * +:associations+ will cache only the associations on an object.  This
+    #    is marginally more tricky since associations tend to be an entirely
+    #    different object on their own.  In order to properly bust caches on
+    #    cached associations, be sure to touch the cached object.
+    #  * +:optional_fields+ will cache all optional fields.
+    #  * +:fields+ will cache all attributes.
+    #  * +:field_name+ will cache the field of name +field_name+, regardless
+    #    of what type that field is.  This manes that if the field is an
+    #    association, it will be cached.  Likewise, if it is a 'regular'
+    #    attribute, it will be cached.
+    #
+    #  @example
+    #    class UserSerializer < QuirkySerializer
+    #      attributes :first, :last, :email
+    #      caches :first, :last
+    #    end
+    #
+    #  @example
+    #    class UserSerializer < QuirkySerializer
+    #      attributes :first, :last, :email
+    #      optional :bio
+    #      caches :optional_fields
+    #    end
+    #
+    #  @example
+    #    class UserSerializer < QuirkySerializer
+    #      attributes :first, :last, :email
+    #      optional :bio
+    #      associations :profile
+    #      caches :all
+    #    end
+    #
+    #  @param [*args]  A list of cacheable attributes, per the notes above.
+    #
     def caches(*attrs)
       fields = []
 
@@ -380,18 +433,35 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
   end
 
+  # Returns a field's information from cache, if possible.
+  #
+  # @param [String|Symbol] field  The field to retrieve from cache.
+  # @return [Mixed] The returned value.
   def _cached_field(field)
     self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field]
   end
 
+  # Stores a +field+'s +value+ in cache.
+  #
+  # @param [String|Symbol] field  The name of the field to store in cache.
+  # @param [Mixed] value  The value of that field.
   def _set_cached_field(field, value)
     self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field] = Rails.cache.fetch([object, field]) { value }
   end
 
+  # Checks whether a certain field is configured to be cached.
+  #
+  # @param [String|Symbol] field  The field ot ocnfirm configuration on.
+  # @return [Boolean]
+  # @see caches
   def _cached?(field)
     self.class._cacheable_fields.present? && self.class._cacheable_fields.include?(field.to_sym)
   end
 
+  # Checks whether a certain field is in the cache.
+  #
+  # @param [String|Symbol] field  The field to check for.
+  # @return [Boolean]
   def _in_cache?(field)
     return false if self.class._cache.blank?
     self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field].present?
