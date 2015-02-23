@@ -260,15 +260,15 @@ describe Api::V1::TestersController, type: :controller do
             id: 1,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T00:00:00.000Z',
-            updated_at: '2015-01-01T00:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000000Z',
+            updated_at: '2015-01-01T00:00:00.000000Z'
           },
           {
             id: 2,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T00:00:00.000Z',
-            updated_at: '2015-01-01T00:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000000Z',
+            updated_at: '2015-01-01T00:00:00.000000Z'
           }
         ]
       }.to_json)
@@ -282,15 +282,15 @@ describe Api::V1::TestersController, type: :controller do
             id: 1,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T00:00:00.000Z',
-            updated_at: '2015-01-01T00:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000000Z',
+            updated_at: '2015-01-01T00:00:00.000000Z'
           },
           {
             id: 2,
             name: 'blah',
             desc: 'so on',
-            created_at: '2015-01-01T00:00:00.000Z',
-            updated_at: '2015-01-01T00:00:00.000Z'
+            created_at: '2015-01-01T00:00:00.000000Z',
+            updated_at: '2015-01-01T00:00:00.000000Z'
           }
         ]
       }.to_json)
