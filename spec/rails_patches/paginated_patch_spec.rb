@@ -193,7 +193,7 @@ describe Invention do
           i.update_attribute('creator_id', rand_arr.pop)
         end
 
-        cursor = Invention.all.order('creator_id ASC').limit(@per_page).pluck(:creator_id).sample(1).first
+        cursor = Invention.all.order('creator_id ASC').limit(@per_page).pluck(:creator_id).sample
 
         paginated_options = {
           use_cursor: true,
@@ -210,7 +210,7 @@ describe Invention do
           i.update_attribute('creator_id', rand_arr.pop)
         end
 
-        cursor = Invention.all.order('creator_id DESC').limit(@per_page).pluck(:creator_id).sample(1).first
+        cursor = Invention.all.order('creator_id DESC').limit(@per_page).pluck(:creator_id).sample
 
         paginated_options = {
           use_cursor: true,
@@ -225,10 +225,10 @@ describe Invention do
       it "ASC works with DateTime columns send from backbone" do
         rand_arr = (1..1000).to_a.shuffle
         inventions.dup.each do |i|
-          i.update_attribute('updated_at', rand_arr.pop.seconds.ago)
+          i.update_attribute('updated_at', rand_arr.pop.minutes.ago)
         end
 
-        cursor = Invention.all.order('updated_at ASC').limit(@per_page).pluck(:updated_at).sample(1).first
+        cursor = Invention.all.order('updated_at ASC').limit(@per_page).pluck(:updated_at).sample
 
         paginated_options = {
           use_cursor: true,
@@ -242,10 +242,10 @@ describe Invention do
       it "DESC works with DateTime columns send from backbone" do
         rand_arr = (1..1000).to_a.shuffle
         inventions.dup.each do |i|
-          i.update_attribute('updated_at', rand_arr.pop.seconds.ago)
+          i.update_attribute('updated_at', rand_arr.pop.minutes.ago)
         end
 
-        cursor = Invention.all.order('updated_at DESC').limit(@per_page).pluck(:updated_at).sample(1).first
+        cursor = Invention.all.order('updated_at DESC').limit(@per_page).pluck(:updated_at).sample
 
         paginated_options = {
           use_cursor: true,
@@ -262,7 +262,7 @@ describe Invention do
       context "values_in" do
         it "filters by values_in for each column specified" do
           inventions.each do |i|
-            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample)
           end
           per_page = rand(1..100)
           paginated_options = {
@@ -277,7 +277,7 @@ describe Invention do
 
         it "filters by values_in if given a single value and not an array of values" do
           inventions.each do |i|
-            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample)
           end
           per_page = rand(1..100)
           paginated_options = {
@@ -293,7 +293,7 @@ describe Invention do
         it "works for date_time columns" do
           rand_arr = (1..1000).to_a.shuffle
           inventions.dup.each do |i|
-            i.update_attribute('updated_at', rand_arr.pop.seconds.ago)
+            i.update_attribute('updated_at', rand_arr.pop.minutes.ago)
           end
 
           rand = rand(1..100)
@@ -315,7 +315,7 @@ describe Invention do
               not_there: ['a', 'c']
             }
           }
-          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for values_in"
+          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for 'values_in'"
         end
 
         it "raises an error if values_in is not a hash" do
@@ -329,7 +329,7 @@ describe Invention do
       context "values_not_in" do
         it "filters by values_not_in for each column specified" do
           inventions.each do |i|
-            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample)
           end
           per_page = rand(1..100)
           paginated_options = {
@@ -344,7 +344,7 @@ describe Invention do
 
         it "filters by values_not_in if given a single value and not an array of values" do
           inventions.each do |i|
-            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample)
           end
           per_page = rand(1..100)
           paginated_options = {
@@ -360,7 +360,7 @@ describe Invention do
         it "works for date_time columns" do
           rand_arr = (1..1000).to_a.shuffle
           inventions.dup.each do |i|
-            i.update_attribute('updated_at', rand_arr.pop.seconds.ago)
+            i.update_attribute('updated_at', rand_arr.pop.minutes.ago)
           end
 
           rand = rand(1..100)
@@ -383,7 +383,7 @@ describe Invention do
               not_there: ['a', 'c']
             }
           }
-          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for values_not_in"
+          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for 'values_not_in'"
         end
 
         it "raises an error if values_not_in is not a hash" do
@@ -391,6 +391,98 @@ describe Invention do
             values_not_in: 'some string'
           }
           expect{Invention.all.paginated(paginated_options)}.to raise_error "'values_not_in' must be a hash"
+        end
+      end
+    end
+
+    context "greater, greater_or_equal, smaller, smaller_or_equal" do
+      let(:operator_types) { %w(greater greater_or_equal smaller smaller_or_equal) }
+
+      it "filters by operator_type for each column specified" do
+        operator_types.each do |operator_type|
+          cut_off = Invention.all.pluck(:id).sample
+
+          paginated_options = {
+            page: 1,
+            per_page: 100,
+            operator_type.to_sym => {
+              id: cut_off
+            }
+          }
+          operator = case operator_type
+                       when 'greater'
+                         '>'
+                       when 'greater_or_equal'
+                         '>='
+                       when 'smaller'
+                         '<'
+                       when 'smaller_or_equal'
+                         '<='
+                     end
+          expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where("inventions.id #{operator} ?", cut_off).order('id ASC').to_a
+        end
+      end
+
+      it "works for date_time columns" do
+        operator_types.each do |operator_type|
+          rand_arr = (1..100).to_a.shuffle
+          inventions.dup.each do |i|
+            i.update_attribute('updated_at', rand_arr.pop.minutes.ago)
+          end
+          cut_off = Invention.all.pluck(:updated_at).sample
+
+          paginated_options = {
+            page: 1,
+            per_page: 100,
+            order_column: 'updated_at',
+            operator_type.to_sym => {
+              updated_at: cut_off.as_json
+            }
+          }
+          operator = case operator_type
+                       when 'greater'
+                         '>'
+                       when 'greater_or_equal'
+                         '>='
+                       when 'smaller'
+                         '<'
+                       when 'smaller_or_equal'
+                         '<='
+                     end
+          expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where("inventions.updated_at #{operator} ?", cut_off).order('updated_at ASC').to_a
+        end
+      end
+
+      context "raises the correct errors" do
+        it "raises an error if the column name in greater doesn't exist" do
+          operator_types.each do |operator_type|
+            paginated_options = {
+              operator_type.to_sym => {
+                not_there: 22
+              }
+            }
+            expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for '#{operator_type}'"
+          end
+        end
+
+        it "raises an error if greater is not a hash" do
+          operator_types.each do |operator_type|
+            paginated_options = {
+              operator_type.to_sym => 'some string'
+            }
+            expect{Invention.all.paginated(paginated_options)}.to raise_error "'#{operator_type}' must be a hash"
+          end
+        end
+
+        it "raises an error if the column is not numeric or date_time" do
+          operator_types.each do |operator_type|
+            paginated_options = {
+              operator_type.to_sym => {
+                title: 23
+              }
+            }
+            expect{Invention.all.paginated(paginated_options)}.to raise_error "'title' is not a valid column for '#{operator_type}'- column must be numeric or date_time"
+          end
         end
       end
     end

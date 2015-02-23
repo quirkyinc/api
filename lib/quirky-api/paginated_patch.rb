@@ -91,7 +91,7 @@ class ActiveRecord::Relation
 
       paginated_options[:values_in].each do |column_name, values|
         # Verify the column exists on the model
-        raise "'#{column_name}' is not a valid column name for values_in" unless model_attributes.include?(column_name.to_s)
+        raise "'#{column_name}' is not a valid column name for 'values_in'" unless model_attributes.include?(column_name.to_s)
 
         conditions << "#{sql_base_class}.#{column_name} IN (?)"
 
@@ -112,7 +112,7 @@ class ActiveRecord::Relation
 
       paginated_options[:values_not_in].each do |column_name, values|
         # Verify the column exists on the model
-        raise "'#{column_name}' is not a valid column name for values_not_in" unless model_attributes.include?(column_name.to_s)
+        raise "'#{column_name}' is not a valid column name for 'values_not_in'" unless model_attributes.include?(column_name.to_s)
 
         conditions << "#{sql_base_class}.#{column_name} NOT IN (?)"
 
@@ -125,6 +125,34 @@ class ActiveRecord::Relation
 
         condition_params << values_in
       end
+    end
+
+    # Filter by greater
+    if paginated_options[:greater].present?
+      added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:greater], 'greater', sql_base_class, model_attributes)
+      conditions += added_conditions
+      condition_params += added_condition_params
+    end
+
+    # Filter by greater_or_equal
+    if paginated_options[:greater_or_equal].present?
+      added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:greater_or_equal], 'greater_or_equal', sql_base_class, model_attributes)
+      conditions += added_conditions
+      condition_params += added_condition_params
+    end
+
+    # Filter by smaller
+    if paginated_options[:smaller].present?
+      added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:smaller], 'smaller', sql_base_class, model_attributes)
+      conditions += added_conditions
+      condition_params += added_condition_params
+    end
+
+    # Filter by smaller_or_equal
+    if paginated_options[:smaller_or_equal].present?
+      added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:smaller_or_equal], 'smaller_or_equal', sql_base_class, model_attributes)
+      conditions += added_conditions
+      condition_params += added_condition_params
     end
 
     # Join the conditions and get the correctly scoped objects
@@ -154,6 +182,40 @@ class ActiveRecord::Relation
     @paginated_meta = value
   end
 
+  # Returns the conditions and condition_params for filtering with greater, greater_or_equal, smaller, smaller_or_equal
+  def greater_smaller_conditions(option, operator_type, sql_base_class, model_attributes)
+    raise "'#{operator_type}' must be a hash" unless option.is_a?(Hash)
+
+    conditions = []
+    condition_params = []
+
+    option.each do |column_name, value|
+      # Verify the column exists on the model and it is numeric or date_time
+      raise "'#{column_name}' is not a valid column name for '#{operator_type}'" unless model_attributes.include?(column_name.to_s)
+      raise "'#{column_name}' is not a valid column for '#{operator_type}'- column must be numeric or date_time" unless [:integer, :float, :datetime].include?(self.base_class.columns_hash[column_name.to_s].type)
+
+      operator = case operator_type
+                   when 'greater'
+                     '>'
+                   when 'greater_or_equal'
+                     '>='
+                   when 'smaller'
+                     '<'
+                   when 'smaller_or_equal'
+                     '<='
+                 end
+
+      conditions << "#{sql_base_class}.#{column_name} #{operator} ?"
+
+      # If the column type is datetime, we need to convert the value to ruby datetime
+      column_type = self.base_class.columns_hash[column_name.to_s].type
+      value =  value.to_datetime if column_type == :datetime
+
+      condition_params << value
+    end
+
+    [conditions, condition_params]
+  end
 end
 
 # extend Array to store paginated_meta
