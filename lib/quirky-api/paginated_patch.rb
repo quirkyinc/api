@@ -77,6 +77,7 @@ class ActiveRecord::Relation
         cursor = paginated_options[:cursor]
         requested_column_type = self.base_class.columns_hash[paginated_options[:order_column].to_s].type
         cursor = cursor.to_datetime if requested_column_type == :datetime
+
         condition_params << cursor
       end
 
@@ -159,12 +160,19 @@ class ActiveRecord::Relation
     conditions_compiled = [conditions.join(' AND '), *condition_params]
     scoped = self.where(conditions_compiled).order("#{paginated_options[:order_column]} #{paginated_options[:order]}")
 
-    # Store the total number of pages on the relationship
-    total_objects = scoped.count
-    total_pages = total_objects.to_f / paginated_options[:per_page]
-    total_pages += 1 if total_objects.to_f % paginated_options[:per_page] > 0
-
-    scoped.send(:paginated_meta=, {total_pages: total_pages.to_i})
+    if paginated_options[:use_cursor]
+      # Store has_next_page on the relationship as paginated_meta if we are doing cursor pagination
+      # As we are doing cursor pagination, the scoped is already bigger or smaller than the cursor (offset is 0 for the query)
+      # We offset by the page we are fetching, and check if there are more models
+      has_next_page = scoped.offset(paginated_options[:per_page]).count > 0
+      scoped.send(:paginated_meta=, {has_next_page: has_next_page})
+    else
+      # Store the total number of pages on the relationship as paginated_meta if we doing page pagination
+      total_objects = scoped.count
+      total_pages = total_objects.to_f / paginated_options[:per_page]
+      total_pages += 1 if total_objects.to_f % paginated_options[:per_page] > 0
+      scoped.send(:paginated_meta=, {total_pages: total_pages.to_i})
+    end
 
     # Return the right page with offset and limit
    scoped.limit(paginated_options[:per_page]).offset(offset)

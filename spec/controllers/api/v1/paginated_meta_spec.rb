@@ -18,13 +18,27 @@ RSpec.describe TestApiController, :type => :controller do
       inventions
     end
 
-    it "adds the pagination_meta with total_pages to the response" do
+    it "adds the pagination_meta with total_pages to the response in page pagination" do
       get :index,
           format: :json,
           paginated_options: {inventions: {per_page: 8}}
 
       expect(response.status).to eq 200
       expect(JSON.parse(response.body)['paginated_meta']['inventions']['total_pages']).to eq 13
+      expect(JSON.parse(response.body)['paginated_meta']['inventions']['has_next_page']).to eq nil
+    end
+
+    it "adds the pagination_meta with has_next_page to the response in cursor pagination" do
+      get :index,
+          format: :json,
+          paginated_options: {inventions: {
+            use_cursor: true,
+            per_page: 8
+          }}
+
+      expect(response.status).to eq 200
+      expect(JSON.parse(response.body)['paginated_meta']['inventions']['has_next_page']).to eq true
+      expect(JSON.parse(response.body)['paginated_meta']['inventions']['total_pages']).to eq nil
     end
 
     it "responds with the correct paginated objects" do
