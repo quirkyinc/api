@@ -13,6 +13,7 @@ module QuirkyApi
         base.send :rescue_from, '::ActiveRecord::RecordInvalid', with: :record_invalid  # 400 Bad Request
         base.send :rescue_from, '::ActiveRecord::RecordNotFound', with: :not_found      # 404 Not Found
         base.send :rescue_from, '::ActiveRecord::RecordNotUnique', with: :not_unique    # 409 Conflict
+        base.send :rescue_from, '::Paginated::InvalidPaginationOptions', with: :paginated_error   # 400 Bad Request
       end
     end
   end

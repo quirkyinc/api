@@ -25,7 +25,7 @@ describe Invention do
           use_cursor: 'something',
           page: 2
         }
-        expect{Invention.all.paginated(paginated_options)}.to raise_error 'use_cursor can only be true of false'
+        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions, 'use_cursor can only be true of false'
       end
 
       it "raises an error if provided user_cursor and page" do
@@ -33,7 +33,7 @@ describe Invention do
           use_cursor: true,
           page: 2
         }
-        expect{Invention.all.paginated(paginated_options)}.to raise_error 'can not do both cursor pagination and page pagination'
+        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  'can not do both cursor pagination and page pagination'
       end
 
       it "raises an error if specified page is smaller than 1" do
@@ -41,7 +41,7 @@ describe Invention do
           use_cursor: false,
           page: -1
         }
-        expect{Invention.all.paginated(paginated_options)}.to raise_error 'page must be 1 or bigger'
+        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  'page must be 1 or bigger'
       end
 
       it "raises an error for invalid string as order" do
@@ -50,7 +50,7 @@ describe Invention do
           per_page: 20,
           order: 'wrong'
         }
-        expect{Invention.all.paginated(paginated_options)}.to raise_error "order can only be 'asc', 'ASC', 'desc', 'DESC' (or nil which will default to 'ASC')"
+        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "order can only be 'asc', 'ASC', 'desc', 'DESC' (or nil which will default to 'ASC')"
       end
 
       it "raises an error if the order_column does not exist as an attribute or store accessor for this class" do
@@ -59,7 +59,7 @@ describe Invention do
           per_page: 50,
           order_column: 'no_such_column'
         }
-        expect{Invention.all.paginated(paginated_options)}.to raise_error "can not sort by 'no_such_column' as such attribute or store accessor does not exist"
+        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "can not sort by 'no_such_column' as such attribute or store accessor does not exist"
       end
 
       it "raises an error if the order_column is not float, integer or date_time type" do
@@ -68,7 +68,7 @@ describe Invention do
           per_page: 10,
           order_column: 'title'
         }
-        expect{Invention.all.paginated(paginated_options)}.to raise_error "can not order by column of type 'string'"
+        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "can not order by column of type 'string'"
       end
     end
 
@@ -364,14 +364,14 @@ describe Invention do
               not_there: ['a', 'c']
             }
           }
-          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for 'values_in'"
+          expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "'not_there' is not a valid column name for 'values_in'"
         end
 
         it "raises an error if values_in is not a hash" do
           paginated_options = {
             values_in: 'some string'
           }
-          expect{Invention.all.paginated(paginated_options)}.to raise_error "'values_in' must be a hash"
+          expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "'values_in' must be a hash"
         end
       end
 
@@ -432,14 +432,14 @@ describe Invention do
               not_there: ['a', 'c']
             }
           }
-          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for 'values_not_in'"
+          expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "'not_there' is not a valid column name for 'values_not_in'"
         end
 
         it "raises an error if values_not_in is not a hash" do
           paginated_options = {
             values_not_in: 'some string'
           }
-          expect{Invention.all.paginated(paginated_options)}.to raise_error "'values_not_in' must be a hash"
+          expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "'values_not_in' must be a hash"
         end
       end
     end
@@ -510,7 +510,7 @@ describe Invention do
                 not_there: 22
               }
             }
-            expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for '#{operator_type}'"
+            expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "'not_there' is not a valid column name for '#{operator_type}'"
           end
         end
 
@@ -519,7 +519,7 @@ describe Invention do
             paginated_options = {
               operator_type.to_sym => 'some string'
             }
-            expect{Invention.all.paginated(paginated_options)}.to raise_error "'#{operator_type}' must be a hash"
+            expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "'#{operator_type}' must be a hash"
           end
         end
 
@@ -530,7 +530,7 @@ describe Invention do
                 title: 23
               }
             }
-            expect{Invention.all.paginated(paginated_options)}.to raise_error "'title' is not a valid column for '#{operator_type}'- column must be numeric or date_time"
+            expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "'title' is not a valid column for '#{operator_type}'- column must be numeric or date_time"
           end
         end
       end

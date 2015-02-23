@@ -191,6 +191,15 @@ module QuirkyApi
       def error(e, status = 400)
         error_response(e.message, status)
       end
+
+      # Return an error rescues from Paginated::InvalidPaginationOptions.
+      # Keys the response with paginated_option hash
+      #
+      # @param e [Exception] A raised exception.
+      #
+      def paginated_error(e)
+        error_response({paginated_option: e.message}, 400)
+      end
     end
   end
 end

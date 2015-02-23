@@ -72,5 +72,14 @@ RSpec.describe TestApiController, :type => :controller do
       expect(response.status).to eq 200
       expect(JSON.parse(response.body)['inventions'].length).to eq 8
     end
+
+    it "responds with 400 and errors if the pagination_options are not correct" do
+      get :index,
+          format: :json,
+          paginated_options: {inventions: {use_cursor: 'wrong'}}
+      expect(response.status).to eq 400
+      response_body = JSON.parse(response.body)
+      expect(response_body['errors']['paginated_option']).to eq "use_cursor can only be true of false"
+    end
   end
 end
