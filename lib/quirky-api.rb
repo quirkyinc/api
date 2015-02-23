@@ -23,6 +23,7 @@ require 'quirky-api/controller'
 # Serializers
 require 'quirky-api/serializers/quirky_serializer'
 require 'quirky-api/serializers/quirky_array_serializer'
+require 'quirky-api/paginated_patch'
 
 # The QuirkyApi module provides API functionality across Quirky apps.  With
 # the +quirky-api+ gem, your application is given access to authentication,

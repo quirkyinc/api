@@ -54,7 +54,12 @@ module QuirkyApi
       options[:current_user] ||= current_user if defined? current_user
       options[:params] ||= params if defined? params
 
-      serializer.new(object, options).as_json(root: false)
+      serialized = serializer.new(object, options).as_json(root: false)
+
+      # Add paginated_meta to arrays of objects if we have it
+      serialized.paginated_meta = object.paginated_meta if object.respond_to?(:paginated_meta) && object.paginated_meta.present? && serialized.respond_to?(:paginated_meta)
+
+      serialized
     end
   end
 end

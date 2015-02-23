@@ -18,16 +18,6 @@ class QuirkyArraySerializer < ::ActiveModel::ArraySerializer
     # More quirky-specific configuration can go here.
   end
 
-  # Overrides the default +as_json+ method to ensure backwards compatability.
-  def as_json(data)
-    data = super
-    if (serializer_options && serializer_options[:flatten]) && data.length == 1
-      data = data.first
-    end
-
-    data
-  end
-
   def warnings(params)
     QuirkySerializer.warnings(params)
   end

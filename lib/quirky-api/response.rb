@@ -110,6 +110,17 @@ module QuirkyApi
                envelope(response)
              end
 
+      # Append paginated_meta to the response if any response objects has it
+      if response.respond_to?(:each) && response.is_a?(Hash)
+        paginated_meta = {}
+        response.each do |key, value|
+          if value.respond_to?(:paginated_meta) && value.paginated_meta.present?
+            paginated_meta[key] = value.paginated_meta
+          end
+        end
+        options[:paginated_meta] = {paginated_meta: paginated_meta} unless paginated_meta.empty?
+      end
+
       data = append_meta(data, options)
 
       renderable = { json: data }
@@ -128,6 +139,9 @@ module QuirkyApi
     #   - +elements+ are top level keys that live outside of the 'envelope', if
     #     configured.  +elements+ must be passed as a hash.
     #
+    #   - +paginated_meta+ is a top level key with the meta returned by the paginated method,
+    #     if configured.  +paginated_meta+ must be passed as a hash.
+    #
     # Both warnings and elements will *only* show up if the response is a hash.
     # They do not know how to react if the response is an array (e.g., if there
     # is no 'envelope' configured.)
@@ -143,6 +157,7 @@ module QuirkyApi
       end
 
       data.merge!(options[:elements]) if options[:elements].present?
+      data.merge!(options[:paginated_meta]) if options[:paginated_meta].present?
 
       data
     end
