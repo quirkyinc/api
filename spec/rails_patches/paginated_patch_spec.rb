@@ -128,7 +128,7 @@ describe Invention do
       end
 
       context "has_next_page" do
-        it "sets the correct has_next_page in pagination_meta on the ActiveRecord::Relation in cursor_pagination" do
+        it "cursor pagination: sets the correct has_next_page in pagination_meta on the ActiveRecord::Relation" do
           id = Invention.order('inventions.id ASC').pluck(:id)[Invention.count - 5]
           paginated_options = {
             use_cursor: true,
@@ -146,16 +146,22 @@ describe Invention do
           }
           inventions = Invention.order('inventions.id ASC').paginated(paginated_options)
           expect(inventions.paginated_meta[:has_next_page]).to eq false
-
         end
 
-        it "does not store has_next_page for page pagination" do
+        it "page pagination: sets the correct has_next_page in pagination_meta on the ActiveRecord::Relation" do
           paginated_options = {
-            page: 2,
-            per_page: 8
+            page: 9,
+            per_page: 10
           }
           inventions = Invention.all.paginated(paginated_options)
-          expect(inventions.paginated_meta[:has_next_page]).not_to be
+          expect(inventions.paginated_meta[:has_next_page]).to eq true
+
+          paginated_options = {
+            page: 10,
+            per_page: 10
+          }
+          inventions = Invention.all.paginated(paginated_options)
+          expect(inventions.paginated_meta[:has_next_page]).to eq false
         end
       end
 
