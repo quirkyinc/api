@@ -257,5 +257,142 @@ describe Invention do
         expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.all.where('inventions.updated_at < ?', cursor).order('updated_at DESC').limit(@per_page).to_a
       end
     end
+
+    context "Filters" do
+      context "values_in" do
+        it "filters by values_in for each column specified" do
+          inventions.each do |i|
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+          end
+          per_page = rand(1..100)
+          paginated_options = {
+            page: 1,
+            per_page: per_page,
+            values_in: {
+              state: ['a', 'c']
+            }
+          }
+          expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where('inventions.state IN (?)', ['a', 'c']).limit(per_page).to_a
+        end
+
+        it "filters by values_in if given a single value and not an array of values" do
+          inventions.each do |i|
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+          end
+          per_page = rand(1..100)
+          paginated_options = {
+            page: 1,
+            per_page: per_page,
+            values_in: {
+              state: 'b'
+            }
+          }
+          expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where('inventions.state IN (?)', ['b']).limit(per_page).to_a
+        end
+
+        it "works for date_time columns" do
+          rand_arr = (1..1000).to_a.shuffle
+          inventions.dup.each do |i|
+            i.update_attribute('updated_at', rand_arr.pop.seconds.ago)
+          end
+
+          rand = rand(1..100)
+          inventions_to_get = Invention.all.sample(rand)
+
+          paginated_options = {
+            page: 1,
+            per_page: 100,
+            values_in: {
+              updated_at: inventions_to_get.map(&:updated_at).as_json
+            }
+          }
+          expect(Invention.all.paginated(paginated_options).to_a.sort_by{|i| i.id }).to eq inventions_to_get.to_a.sort_by{|i| i.id }
+        end
+
+        it "raises an error if the column name in values_in doesn't exist" do
+          paginated_options = {
+            values_in: {
+              not_there: ['a', 'c']
+            }
+          }
+          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for values_in"
+        end
+
+        it "raises an error if values_in is not a hash" do
+          paginated_options = {
+            values_in: 'some string'
+          }
+          expect{Invention.all.paginated(paginated_options)}.to raise_error "'values_in' must be a hash"
+        end
+      end
+
+      context "values_not_in" do
+        it "filters by values_not_in for each column specified" do
+          inventions.each do |i|
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+          end
+          per_page = rand(1..100)
+          paginated_options = {
+            page: 1,
+            per_page: per_page,
+            values_not_in: {
+              state: ['a', 'c']
+            }
+          }
+          expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where('inventions.state NOT IN (?)', ['a', 'c']).limit(per_page).to_a
+        end
+
+        it "filters by values_not_in if given a single value and not an array of values" do
+          inventions.each do |i|
+            i.update_attribute('state', ['a', 'b', 'c', 'd'].sample(1).first)
+          end
+          per_page = rand(1..100)
+          paginated_options = {
+            page: 1,
+            per_page: per_page,
+            values_not_in: {
+              state: 'b'
+            }
+          }
+          expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where('inventions.state NOT IN (?)', ['b']).limit(per_page).to_a
+        end
+
+        it "works for date_time columns" do
+          rand_arr = (1..1000).to_a.shuffle
+          inventions.dup.each do |i|
+            i.update_attribute('updated_at', rand_arr.pop.seconds.ago)
+          end
+
+          rand = rand(1..100)
+          inventions_not_to_get = Invention.all.sample(rand)
+          inventions_to_get = Invention.all.where('id NOT IN (?)', inventions_not_to_get.map(&:id))
+
+          paginated_options = {
+            page: 1,
+            per_page: 100,
+            values_not_in: {
+              updated_at: inventions_not_to_get.map(&:updated_at).as_json
+            }
+          }
+          expect(Invention.all.paginated(paginated_options).to_a.sort_by{|i| i.id }).to eq inventions_to_get.to_a.sort_by{|i| i.id }
+        end
+
+        it "raises an error if the column name in values_not_in doesn't exist" do
+          paginated_options = {
+            values_not_in: {
+              not_there: ['a', 'c']
+            }
+          }
+          expect{Invention.all.paginated(paginated_options)}.to raise_error "'not_there' is not a valid column name for values_not_in"
+        end
+
+        it "raises an error if values_not_in is not a hash" do
+          paginated_options = {
+            values_not_in: 'some string'
+          }
+          expect{Invention.all.paginated(paginated_options)}.to raise_error "'values_not_in' must be a hash"
+        end
+      end
+    end
   end
 end
