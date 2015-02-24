@@ -1,4 +1,53 @@
 module Paginated
+#
+# There are 2 types of pagination:
+#
+# 1. Cursor Pagination:
+#    We ask for the next batch after a cursor.
+#    - Specify {use_cursor: true}.
+#    - Do not set page (it will be ignored).
+#    - The response will include paginated_meta with has_next_page [Boolean]
+#
+# 2. Page Pagination:
+#    We ask for a specific page.
+#    - Specify the page you want {page: 3}.
+#    - Do not specify use_cursor or set it to false.
+#    - The response will include paginated_meta with total_page [Integer] and has_next_page [Boolean]
+#
+#  Example:
+#
+#  paginated_options: {
+#    useCursor: true,                                   (optional [Boolean] = If we want to paginate with cursor. If false or not specified - will do page pagination.
+#    page: 2,                                           (optional [Integer] = The page we want to fetch in page pagination. If not specified will be set to 1. Not used in cursor pagination.
+#    perPage: 15,                                       (optional [Integer] = The number of items per page. If not specified will default to 20.
+#    order: 'desc',                                     (optional [String]  = The order. 'asc' or 'desc'. If not specified will default to 'asc'.
+#    orderColumn: 'created_at',                         (optional [String]  = The name of the column to order by. If not specified will default to 'id'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         //     'id': '524'
+#                                                                             NOTE!! - only number or datetime columns are accepted.
+#    values_in: {                                       (optional [Hash]    = Values for SQL 'IN'.
+#      'status': 'accepted',                                                  Each key is a column_name. Each value is an array of values or individual value.
+#      'state': ['public', 'in_review_queue']                                 Only number or datetime columns are accepted.
+#    },
+#    values_not_in: {                                   (optional [Hash]    = Values for SQL 'NOT IN'.
+#      'status': 'accepted',                                                  Each key is a column_name. Each value is  an array of values or individual value.
+#      'state': ['public', 'in_review_queue']                                 Only number or datetime columns are accepted.
+#    },
+#    greater: {                                         (optional [Hash]    = Value for SQL '>'.
+#      'rating': 4,                                                           Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    },
+#    greater_or_equal: {                                (optional [Hash]    = Value for SQL '>='.
+#      'rating': 4,                                                           Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    },
+#    smaller: {                                         (optional [Hash]    = Value for SQL '<'.
+#      'rating': 4,                                                           Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    },
+#    smaller_or_equal: {                                (optional [Hash]    = Value for SQL '<='.
+#      'rating': 4,                                                           Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    },
+#  }
 
   # Error class for the module
   class InvalidPaginationOptions < StandardError
