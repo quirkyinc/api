@@ -5,7 +5,7 @@ module Paginated
 # 1. Cursor Pagination:
 #    We ask for the next batch after a cursor.
 #    - Specify {use_cursor: true}.
-#    - Do not set page (it will be ignored).
+#    - Do not specify page.
 #    - The response will include paginated_meta with has_next_page [Boolean]
 #
 # 2. Page Pagination:
