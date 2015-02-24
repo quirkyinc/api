@@ -198,7 +198,7 @@ module QuirkyApi
       # @param e [Exception] A raised exception.
       #
       def paginated_error(e)
-        error_response({paginated_option: e.message}, 400)
+        error_response({paginated_options: e.message}, 400)
       end
     end
   end

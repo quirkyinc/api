@@ -79,7 +79,7 @@ RSpec.describe TestApiController, :type => :controller do
           paginated_options: {inventions: {use_cursor: 'wrong'}}
       expect(response.status).to eq 400
       response_body = JSON.parse(response.body)
-      expect(response_body['errors']['paginated_option']).to eq "use_cursor can only be true of false"
+      expect(response_body['errors']['paginated_options']).to eq "use_cursor can only be true of false"
     end
   end
 end
