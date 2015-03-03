@@ -14,38 +14,38 @@ module Paginated
 #    - Do not specify use_cursor or set it to false.
 #    - The response will include paginated_meta with total_page [Integer] and has_next_page [Boolean]
 #
-#  Example:
+# Example:
 #
 #  paginated_options: {
-#    useCursor: true,                                   (optional [Boolean] = If we want to paginate with cursor. If false or not specified - will do page pagination.
-#    page: 2,                                           (optional [Integer] = The page we want to fetch in page pagination. If not specified will be set to 1. Not used in cursor pagination.
-#    perPage: 15,                                       (optional [Integer] = The number of items per page. If not specified will default to 20.
-#    order: 'desc',                                     (optional [String]  = The order. 'asc' or 'desc'. If not specified will default to 'asc'.
-#    orderColumn: 'created_at',                         (optional [String]  = The name of the column to order by. If not specified will default to 'id'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         //     'id': '524'
-#                                                                             NOTE!! - only number or datetime columns are accepted.
-#    values_in: {                                       (optional [Hash]    = Values for SQL 'IN'.
-#      'status': 'accepted',                                                  Each key is a column_name. Each value is an array of values or individual value.
-#      'state': ['public', 'in_review_queue']                                 Only number or datetime columns are accepted.
+#    useCursor: true,                                   (optional) [Boolean] = If we want to paginate with cursor. If false or not specified - will do page pagination.
+#    page: 2,                                           (optional) [Integer] = The page we want to fetch in page pagination. If not specified will be set to 1. Not used in cursor pagination.
+#    perPage: 15,                                       (optional) [Integer] = The number of items per page. If not specified will default to 20.
+#    order: 'desc',                                     (optional) [String]  = The order. 'asc' or 'desc'. If not specified will default to 'asc'.
+#    orderColumn: 'created_at',                         (optional) [String]  = The name of the column to order by. If not specified will default to 'id'.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       //     'id': '524'
+#                                                                              NOTE!! - only number or datetime columns are accepted.
+#    values_in: {                                       (optional) [Hash]    = Values for SQL 'IN'.
+#      'status': 'accepted',                                                   Each key is a column_name. Each value is an array of values or individual value.
+#      'state': ['public', 'in_review_queue']                                  Only number or datetime columns are accepted.
 #    },
-#    values_not_in: {                                   (optional [Hash]    = Values for SQL 'NOT IN'.
-#      'status': 'accepted',                                                  Each key is a column_name. Each value is  an array of values or individual value.
-#      'state': ['public', 'in_review_queue']                                 Only number or datetime columns are accepted.
+#    values_not_in: {                                   (optional) [Hash]    = Values for SQL 'NOT IN'.
+#      'status': 'accepted',                                                   Each key is a column_name. Each value is  an array of values or individual value.
+#      'state': ['public', 'in_review_queue']                                  Only number or datetime columns are accepted.
 #    },
-#    greater: {                                         (optional [Hash]    = Value for SQL '>'.
-#      'rating': 4,                                                           Each key is a column_name.
-#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    greater: {                                         (optional) [Hash]    = Value for SQL '>'.
+#      'rating': 4,                                                            Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
-#    greater_or_equal: {                                (optional [Hash]    = Value for SQL '>='.
-#      'rating': 4,                                                           Each key is a column_name.
-#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    greater_or_equal: {                                (optional) [Hash]    = Value for SQL '>='.
+#      'rating': 4,                                                            Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
-#    smaller: {                                         (optional [Hash]    = Value for SQL '<'.
-#      'rating': 4,                                                           Each key is a column_name.
-#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    smaller: {                                         (optional) [Hash]    = Value for SQL '<'.
+#      'rating': 4,                                                            Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
-#    smaller_or_equal: {                                (optional [Hash]    = Value for SQL '<='.
-#      'rating': 4,                                                           Each key is a column_name.
-#      'created_at': '2015-02-10T12:40:36.018645-05:00'                       Only number or datetime columns are accepted.
+#    smaller_or_equal: {                                (optional) [Hash]    = Value for SQL '<='.
+#      'rating': 4,                                                            Each key is a column_name.
+#      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
 #  }
 
@@ -57,6 +57,8 @@ module Paginated
   class ActiveRecord::Relation
 
     def paginated(paginated_options={})
+      paginated_options = {} if paginated_options.nil?
+
       # Convert all non-string values to the right format
       case paginated_options[:use_cursor]
         when 'true', true
@@ -93,7 +95,7 @@ module Paginated
 
       # If we have order_column - raise error if order_column is for a column that doesn't exist
       if paginated_options[:order_column].present?
-        raise Paginated::InvalidPaginationOptions, "can not sort by '#{paginated_options[:order_column]}' as such attribute or store accessor does not exist" unless model_attributes.include?(paginated_options[:order_column])
+        raise Paginated::InvalidPaginationOptions, "can not sort by '#{paginated_options[:order_column]}' as such attribute or store accessor does not exist" unless model_attributes.include?(paginated_options[:order_column].to_s)
 
         # Raise error if :order_column is not float, integer or date_time column, as we can not sort by it
         # Excluding psql store columns, as their type is determined by the validations, and we can not automatically infer it
@@ -227,8 +229,8 @@ module Paginated
         total_pages = total_objects.to_f / paginated_options[:per_page]
         total_pages += 1 if total_objects.to_f % paginated_options[:per_page] > 0
         paginated_meta =  {
-          total_pages: total_pages.to_i,
-          has_next_page: paginated_options[:page] < total_pages.to_i
+          total_pages => total_pages.to_i,
+          has_next_page => paginated_options[:page] < total_pages.to_i
         }
         scoped.send(:paginated_meta=, paginated_meta)
       end
