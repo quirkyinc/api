@@ -31,19 +31,19 @@ module Paginated
 #      'status': 'accepted',                                                   Each key is a column_name. Each value is  an array of values or individual value.
 #      'state': ['public', 'in_review_queue']                                  Only number or datetime columns are accepted.
 #    },
-#    greater: {                                         (optional) [Hash]    = Value for SQL '>'.
+#    greater_than: {                                    (optional) [Hash]    = Value for SQL '>'.
 #      'rating': 4,                                                            Each key is a column_name.
 #      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
-#    greater_or_equal: {                                (optional) [Hash]    = Value for SQL '>='.
+#    greater_than_or_equal_to: {                        (optional) [Hash]    = Value for SQL '>='.
 #      'rating': 4,                                                            Each key is a column_name.
 #      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
-#    smaller: {                                         (optional) [Hash]    = Value for SQL '<'.
+#    less_than: {                                       (optional) [Hash]    = Value for SQL '<'.
 #      'rating': 4,                                                            Each key is a column_name.
 #      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
-#    smaller_or_equal: {                                (optional) [Hash]    = Value for SQL '<='.
+#    less_than_or_equal_to: {                           (optional) [Hash]    = Value for SQL '<='.
 #      'rating': 4,                                                            Each key is a column_name.
 #      'created_at': '2015-02-10T12:40:36.018645-05:00'                        Only number or datetime columns are accepted.
 #    },
@@ -185,30 +185,30 @@ module Paginated
         end
       end
 
-      # Filter by greater
-      if paginated_options[:greater].present?
-        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:greater], 'greater', sql_base_class, model_attributes)
+      # Filter by greater_than
+      if paginated_options[:greater_than].present?
+        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:greater_than], 'greater_than', sql_base_class, model_attributes)
         conditions += added_conditions
         condition_params += added_condition_params
       end
 
-      # Filter by greater_or_equal
-      if paginated_options[:greater_or_equal].present?
-        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:greater_or_equal], 'greater_or_equal', sql_base_class, model_attributes)
+      # Filter by greater_than_or_equal_to
+      if paginated_options[:greater_than_or_equal_to].present?
+        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:greater_than_or_equal_to], 'greater_than_or_equal_to', sql_base_class, model_attributes)
         conditions += added_conditions
         condition_params += added_condition_params
       end
 
-      # Filter by smaller
-      if paginated_options[:smaller].present?
-        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:smaller], 'smaller', sql_base_class, model_attributes)
+      # Filter by smaller_than
+      if paginated_options[:smaller_than].present?
+        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:smaller_than], 'smaller_than', sql_base_class, model_attributes)
         conditions += added_conditions
         condition_params += added_condition_params
       end
 
-      # Filter by smaller_or_equal
-      if paginated_options[:smaller_or_equal].present?
-        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:smaller_or_equal], 'smaller_or_equal', sql_base_class, model_attributes)
+      # Filter by smaller_than_or_equal_to
+      if paginated_options[:smaller_than_or_equal_to].present?
+        added_conditions, added_condition_params = greater_smaller_conditions(paginated_options[:smaller_than_or_equal_to], 'smaller_than_or_equal_to', sql_base_class, model_attributes)
         conditions += added_conditions
         condition_params += added_condition_params
       end
@@ -251,7 +251,7 @@ module Paginated
       @paginated_meta = value
     end
 
-    # Returns the conditions and condition_params for filtering with greater, greater_or_equal, smaller, smaller_or_equal
+    # Returns the conditions and condition_params for filtering with greater_than, greater_than_or_equal_to, smaller_than, smaller_than_or_equal_to
     def greater_smaller_conditions(option, operator_type, sql_base_class, model_attributes)
       raise Paginated::InvalidPaginationOptions, "'#{operator_type}' must be a hash" unless option.is_a?(Hash)
 
@@ -264,13 +264,13 @@ module Paginated
         raise Paginated::InvalidPaginationOptions, "'#{column_name}' is not a valid column for '#{operator_type}'- column must be numeric or date_time" unless [:integer, :float, :datetime].include?(self.base_class.columns_hash[column_name.to_s].type)
 
         operator = case operator_type
-                     when 'greater'
+                     when 'greater_than'
                        '>'
-                     when 'greater_or_equal'
+                     when 'greater_than_or_equal_to'
                        '>='
-                     when 'smaller'
+                     when 'smaller_than'
                        '<'
-                     when 'smaller_or_equal'
+                     when 'smaller_than_or_equal_to'
                        '<='
                    end
 

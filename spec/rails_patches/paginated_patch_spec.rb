@@ -444,8 +444,8 @@ describe Invention do
       end
     end
 
-    context "greater, greater_or_equal, smaller, smaller_or_equal" do
-      let(:operator_types) { %w(greater greater_or_equal smaller smaller_or_equal) }
+    context "greater_than, greater_than_or_equal_to, smaller_than, smaller_than_or_equal_to" do
+      let(:operator_types) { %w(greater_than greater_than_or_equal_to smaller_than smaller_than_or_equal_to) }
 
       it "filters by operator_type for each column specified" do
         operator_types.each do |operator_type|
@@ -459,13 +459,13 @@ describe Invention do
             }
           }
           operator = case operator_type
-                       when 'greater'
+                       when 'greater_than'
                          '>'
-                       when 'greater_or_equal'
+                       when 'greater_than_or_equal_to'
                          '>='
-                       when 'smaller'
+                       when 'smaller_than'
                          '<'
-                       when 'smaller_or_equal'
+                       when 'smaller_than_or_equal_to'
                          '<='
                      end
           expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where("inventions.id #{operator} ?", cut_off).order('id ASC').to_a
@@ -489,13 +489,13 @@ describe Invention do
             }
           }
           operator = case operator_type
-                       when 'greater'
+                       when 'greater_than'
                          '>'
-                       when 'greater_or_equal'
+                       when 'greater_than_or_equal_to'
                          '>='
-                       when 'smaller'
+                       when 'smaller_than'
                          '<'
-                       when 'smaller_or_equal'
+                       when 'smaller_than_or_equal_to'
                          '<='
                      end
           expect(Invention.all.paginated(paginated_options).to_a).to eq Invention.where("inventions.updated_at #{operator} ?", cut_off).order('updated_at ASC').to_a
