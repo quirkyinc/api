@@ -80,7 +80,7 @@ module Paginated
       raise Paginated::InvalidPaginationOptions, "order can only be 'asc', 'ASC', 'desc', 'DESC' (or nil which will default to 'ASC')" if paginated_options[:order].present? && !%w(asc ASC desc DESC).include?(paginated_options[:order])
 
       # The base class we will use for the sql statements
-      sql_base_class = self.base_class.to_s.pluralize.downcase
+      sql_base_class = self.base_class.table_name
 
       # Keep track of the attributes the model has that we can run sql on
       model_attributes = []
