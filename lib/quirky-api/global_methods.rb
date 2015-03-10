@@ -6,6 +6,9 @@ module QuirkyApi
     # that serializer.  This method will also automatically include
     # +current_user+ and +params+, ala +respond_with+.
     #
+    # If there is no appropriate serializer for the specified object, this will
+    # call +.as_json+ on the object and return that value instead.
+    #
     # @param object [Object] The object to serialize.  This must respond to
     #                        +active_model_serializer+ for serialization.
     # @param serializer [Object|nil] (Optional) The serializer to use when
@@ -27,7 +30,7 @@ module QuirkyApi
     #         }
     #       }
     #
-    #   render json: { inventions: serializer(Invention.all) }
+    #   render json: { inventions: serialize(Invention.all) }
     #   #=> {
     #         "inventions": [
     #           {
@@ -48,7 +51,7 @@ module QuirkyApi
     #       }
     def serialize(object, serializer = nil, options = {})
       serializer = QuirkySerializer.get_serializer(object) if serializer.blank?
-      return if serializer.blank?
+      return object.as_json(root: false) if serializer.blank?
 
       options ||= {}
       options[:current_user] ||= current_user if defined? current_user
