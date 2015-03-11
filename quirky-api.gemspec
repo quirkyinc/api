@@ -12,24 +12,19 @@ Gem::Specification.new do |s|
   s.authors     = ['Quirky Development', 'Michael Chittenden']
   s.email       = ['platform@quirky.com', 'mchittenden@quirky.com']
   s.homepage    = 'https://www.quirky.com'
-  s.summary     = 'Quirky API is a standard API used across Quirky domains.'
-  s.description = 'The Quirky API is used on both QTIP and QC to share ' \
-                  'information and provide standard functionality.'
+  s.summary     = 'Quirky API is a set of tools to improve API responses.'
+  s.description = 'Quirky API gem is a slew of tools used to maintain API ' \
+                  'response unit across Quirky services.'
 
   s.files = Dir['{app,config,db,lib}/**/*', 'Rakefile', 'README.rdoc']
 
   s.add_dependency 'active_model_serializers', '0.8.1'
   s.add_dependency 'will_paginate', '3.0.5'
-  s.add_dependency 'typhoeus'
-  s.add_dependency 'yajl-ruby'
-  s.add_dependency 'virtus'
-  s.add_dependency 'webmock'
-  s.add_dependency 'faker'
-  s.add_dependency 'httparty'
   s.add_dependency 'newrelic_rpm'
   s.add_dependency 'hirb'
   s.add_dependency 'responders'
 
+  s.add_development_dependency 'faker'
   s.add_development_dependency 'rails', '4.2'
   s.add_development_dependency 'sqlite3'
   s.add_development_dependency 'rspec-rails'

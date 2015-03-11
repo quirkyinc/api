@@ -12,27 +12,10 @@ module QuirkyApi
         # error_check allows mobile to send fake error codes.
         base.send :before_filter, :raise_error_check
 
+        # We don't need verify_authenticity_token in the API -- it should be
+        # validated in other ways.
         base.send :skip_before_filter, :verify_authenticity_token
-
-        # Double checks the API token.
-        base.send :before_filter, :valid_api_credentials? if defined?(ApiKey)
       end
-    end
-
-    # Ensures that API credentials are valid.  This may disappear one day.
-    def valid_api_credentials?
-      # If you're logged in, or the request is coming from web, there are other
-      # securities in place.
-      return true if logged_in? ||
-                     request.headers['X-App-Version'].blank? ||
-                     request.method == :GET
-
-      # API tokens must be passed in the Authorization header.
-      authenticate_or_request_with_http_token do |token|
-        ApiKey.valid_token?(token)
-      end
-
-      false
     end
 
     # Raises a fake error if requested.  Send +params[:forced_error]+ with a

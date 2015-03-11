@@ -6,8 +6,8 @@ class InvalidAssociation < ::Exception ; end
 # Dependencies
 require 'active_model_serializers'
 
+# QuirkyAPI methods that are available to the entire app.
 require 'quirky-api/global_methods'
-require 'quirky-api/deep_encode'
 include QuirkyApi::Global
 
 # Core QuirkyApi modules
@@ -15,7 +15,6 @@ require 'quirky-api/configurable'
 require 'quirky-api/rescue'
 require 'quirky-api/bouncer'
 require 'quirky-api/auth'
-require 'quirky-api/mobile'
 require 'quirky-api/response'
 require 'quirky-api/can'
 require 'quirky-api/controller'
