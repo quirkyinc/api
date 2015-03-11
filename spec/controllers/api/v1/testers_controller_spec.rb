@@ -31,6 +31,8 @@ shared_examples_for 'a wrappable endpoint' do |body, method, endpoint|
 end
 
 describe Api::V1::TestersController, type: :controller do
+  before { QuirkyApi.pretty_print = false }
+
   describe 'GET #as_one' do
     before { @tester = FactoryGirl.create(:tester, name: 'Tester', last_name: 'Atqu') }
 
@@ -239,12 +241,12 @@ describe Api::V1::TestersController, type: :controller do
     end
 
     it 'writes cache only once' do
-      allow(controller).to receive(:append_meta).and_return('testing')
-      expect(controller).to receive(:append_meta)
+      allow(controller).to receive(:prepare_data).and_return('testing')
+      expect(controller).to receive(:prepare_data)
       get :with_cache_serialized
       expect(response.body).to eq('testing'.to_json)
 
-      expect(controller).to_not receive(:append_meta)
+      expect(controller).to_not receive(:prepare_data)
       get :with_cache_serialized
       expect(response.body).to eq('testing'.to_json)
     end

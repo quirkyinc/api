@@ -36,7 +36,6 @@ module QuirkyApi
     include QuirkyApi::Auth
     include QuirkyApi::Rescue
     include QuirkyApi::Bouncer
-    include QuirkyApi::Mobile
     include QuirkyApi::Response
     include QuirkyApi::Can
     include QuirkyApi::Global

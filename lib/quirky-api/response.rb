@@ -72,10 +72,10 @@ module QuirkyApi
                      block.call
                    end
 
-            append_meta(envelope(data), options).to_json
+            prepare_data(data, options).to_json
           end
 
-          renderable = { json: JSON.pretty_generate(response) }
+          renderable = { json: response }
           renderable[:status] = options[:status] if options[:status].present?
 
           render renderable
@@ -105,9 +105,9 @@ module QuirkyApi
                end
 
                @serialized_data = serializer.new(response, options)
-               envelope(@serialized_data.as_json(root: false))
+               @serialized_data.as_json(root: false)
              else
-               envelope(response)
+               response
              end
 
       # Append paginated_meta to the response if any response objects has it
@@ -121,9 +121,9 @@ module QuirkyApi
         options[:paginated_meta] = {paginated_meta: paginated_meta} unless paginated_meta.empty?
       end
 
-      data = append_meta(data, options)
+      data = prepare_data(data, options)
 
-      renderable = { json: JSON.pretty_generate(data) }
+      renderable = { json: data }
       renderable[:status] = options[:status] if options[:status].present?
 
       render renderable
@@ -135,8 +135,10 @@ module QuirkyApi
 
     protected
 
-    # <tt>append_meta</tt> automatically appends additioanl meta information to
-    # the JSON response.  Options include:
+    # <tt>prepare_data</tt> is the final step before objects are displayed as
+    # JSON in the API.  This method will append warnings, elements and
+    # paginated_data to the response if possible, and 'prettify' the JSON
+    # output if configured.
     #
     #   - +warnings+ are issues that the serializer encountered while
     #     serializing the object(s).  +warnings+ are usually syntax errors
@@ -151,7 +153,8 @@ module QuirkyApi
     # Both warnings and elements will *only* show up if the response is a hash.
     # They do not know how to react if the response is an array (e.g., if there
     # is no 'envelope' configured.)
-    def append_meta(data, options)
+    def prepare_data(data, options)
+      data = envelope(data)
       return data unless data.is_a?(Hash)
 
       # Check for warnings if applicable.
@@ -164,6 +167,9 @@ module QuirkyApi
 
       data.merge!(options[:elements]) if options[:elements].present?
       data.merge!(options[:paginated_meta]) if options[:paginated_meta].present?
+
+      # Pretty printing is enabled by default.
+      data = JSON.pretty_generate(data) if QuirkyApi.pretty_print?
 
       data
     end
