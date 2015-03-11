@@ -131,7 +131,36 @@ module QuirkyApi
 
     protected
 
-
+    # <tt>append_meta</tt> will wrap and append useful information to the
+    # response.  This includes:
+    #
+    #   1. +elements+ specified in the endpoint.  +elements+ are top-level keys
+    #      in the JSON response.  They are at the same level as the envelope.
+    #   2. +warnings+ are things that are were technically incorrect in the
+    #      serialization of data.  These are problems that are not breaking,
+    #      but you should be aware of.  This will only show up if you specify
+    #      +config.warn_invalid_fields+ in your configure block.
+    #   3. +paginated_meta+ is information about our custom pagination
+    #      implementation.
+    #
+    # @param [Object] data   The data that should be processed, passed directly
+    #                        from +respond_with+.  If this is an array, and
+    #                        there is no envelope, no meta will be added.
+    # @param [Hash] options  A hash of options, passed directly from
+    #                        +respond_with+, which configure how the response
+    #                        will appear.
+    #
+    # @example
+    #   # With a default envelope of 'data'
+    #   response = { id: 1, name: 'Mike Sea' }
+    #   append_meta(response, options)
+    #   #=> { data: { id: 1, name: 'Mike Sea' } }
+    #
+    #   # With no envelope
+    #   response = [{ id: 1, name: 'Mike Sea' }, { id: 2, name: 'Bob Tester' }]
+    #   append_meta(response, options)
+    #   #=> [{ id: 1, name: 'Mike Sea' }, { id: 2, name: 'Bob Tester' }]
+    #
     def append_meta(data, options = {})
       # Allow the envelope to be configurable from within the options.
       # +options+ here are passed all the way from +respond_with+, so you can
@@ -173,12 +202,44 @@ module QuirkyApi
         end
       end
 
+      # +elements+ are top level keys in the JSON response, appearing at the
+      # same level as the envelope for data.  You can specify as many elements
+      # as you want, so long as they are a hash.
       data.merge!(options[:elements]) if options[:elements].present?
+
+      # Paginated meta is information returned from our custom implementation
+      # of pagination.
       data.merge!(options[:paginated_meta]) if options[:paginated_meta].present?
+
+      # If configured, we pretty JSON responses.  This is the default response.
+      data = JSON.pretty_generate(data) if QuirkyApi.pretty_print?
 
       data
     end
 
+    # <tt>build_json_response</tt> prepares and returns the actual object that
+    # will be passed to +render+, and in turn actually rendered as JSON.
+    #
+    # If there is a callback specified, and JSONP support is enabled, the
+    # status code will always be +200 (OK)+, and the 'real' status code will be
+    # passed as an attribute in the +meta+ hash, built in +append_meta+.  This
+    # will also pass the callback to +render+, which automatically handles
+    # JSONP responses.
+    #
+    # If this is not a JSONP request, you can specify the status code as an
+    # option of +respond_with+, in order to change the status code of the
+    # response.  Example:
+    #
+    #   respond_with(User.first, status: 201)
+    #   #=> Responds with the first user, with status code '201 (Created)'.
+    #
+    # @param [Object] data   The data that should be processed, passed directly
+    #                        from +respond_with+.  If this is an array, and
+    #                        there is no envelope, no meta will be added.
+    # @param [Hash] options  A hash of options, passed directly from
+    #                        +respond_with+, which configure how the response
+    #                        will appear.
+    #
     def build_json_response(data, options = {})
       renderable = { json: data }
 
