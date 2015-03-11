@@ -526,13 +526,13 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @return [Hash] A hash of key / value pairs.
   def filter_attributes(attrs)
     attributes = attrs.each_with_object({}) do |name, inst|
-      inst[name] = get_field(name) rescue nil
+      inst[name] = get_field(name)
     end
 
     optional_fields = _optional
     if optional_fields.present?
       optional_fields.each do |field|
-        attributes[field] = get_field(field) rescue nil
+        attributes[field] = get_field(field)
       end
     end
 
