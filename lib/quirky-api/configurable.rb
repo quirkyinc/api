@@ -5,7 +5,7 @@ module QuirkyApi
   class << self
     attr_accessor :validate_associations, :warn_invalid_fields, :auth_system,
                   :show_exceptions, :exception_handler, :envelope,
-                  :pretty_print, :jsonp
+                  :pretty_print, :jsonp, :rate_limmit
 
     def has_auth_system?
       auth_system.present? && auth_system.is_a?(Module)
@@ -25,6 +25,14 @@ module QuirkyApi
 
     def jsonp?
       jsonp === true
+    end
+
+    def rate_limit
+      @rate_limit.nil? ? true : @rate_limit
+    end
+
+    def rate_limit?
+      rate_limit === true
     end
 
     def configure
