@@ -556,9 +556,9 @@ class QuirkySerializer < ::ActiveModel::Serializer
                   @opts[:"#{key}_associations"].present? ||
                   @opts[:"#{key}_extra_fields"].present?
 
-    sub_fields = [*@opts[:"#{key}_fields"]]
-    sub_associations = [*@opts[:"#{key}_associations"]]
-    sub_opt_fields = [*@opts[:"#{key}_extra_fields"]]
+    sub_fields = @opts[:"#{key}_fields"]
+    sub_associations = @opts[:"#{key}_associations"]
+    sub_opt_fields = @opts[:"#{key}_extra_fields"]
 
     [sub_fields, sub_associations, sub_opt_fields]
   end
