@@ -16,7 +16,7 @@ module QuirkyApi
     end
 
     def pretty_print?
-      @pretty_print === true
+      pretty_print === true
     end
 
     def configure
