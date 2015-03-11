@@ -241,12 +241,12 @@ describe Api::V1::TestersController, type: :controller do
     end
 
     it 'writes cache only once' do
-      allow(controller).to receive(:prepare_data).and_return('testing')
-      expect(controller).to receive(:prepare_data)
+      allow(controller).to receive(:append_meta).and_return('testing')
+      expect(controller).to receive(:append_meta)
       get :with_cache_serialized
       expect(response.body).to eq('testing'.to_json)
 
-      expect(controller).to_not receive(:prepare_data)
+      expect(controller).to_not receive(:append_meta)
       get :with_cache_serialized
       expect(response.body).to eq('testing'.to_json)
     end
@@ -349,6 +349,54 @@ describe Api::V1::TestersController, type: :controller do
           get :with_arr_elements
           expect(response.body).to eq(['one', 'two', 'three'].to_json)
         end
+      end
+    end
+  end
+
+  describe 'GET #with_callback' do
+    context 'if jsonp is enabled' do
+      before { QuirkyApi.jsonp = true }
+      context 'with an envelope' do
+        before do
+          QuirkyApi.envelope = 'data'
+        end
+
+        after do
+          QuirkyApi.envelope = nil
+        end
+
+        it 'returns data wrapped in a jsonp callback' do
+          get :with_callback
+          expect(response.body).to eq('/**/test({"data":"hello","meta":{"status":200}})')
+        end
+
+        context 'with a custom param callback' do
+          it 'wraps the response with that callback instead' do
+            get :with_callback, callback: 'another'
+            expect(response.body).to eq('/**/another({"data":"hello","meta":{"status":200}})')
+          end
+        end
+      end
+      context 'with no envelope' do
+        before { QuirkyApi.envelope = nil }
+        it 'returns a jsonp string' do
+          get :with_callback
+          expect(response.body).to eq('/**/test({"data":"hello","meta":{"status":200}})')
+        end
+
+        context 'with a custom param callback' do
+          it 'wraps the response with that callback instead' do
+            get :with_callback, callback: 'another'
+            expect(response.body).to eq('/**/another({"data":"hello","meta":{"status":200}})')
+          end
+        end
+      end
+    end
+    context 'if jsonp is disabled' do
+      before { QuirkyApi.jsonp = false }
+      it 'returns just a body' do
+        get :with_callback
+        expect(response.body).to eq 'hello'
       end
     end
   end

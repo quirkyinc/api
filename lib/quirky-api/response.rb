@@ -72,11 +72,10 @@ module QuirkyApi
                      block.call
                    end
 
-            prepare_data(data, options).to_json
+            append_meta(data, options).to_json
           end
 
-          renderable = { json: response }
-          renderable[:status] = options[:status] if options[:status].present?
+          renderable = build_json_response(response, options)
 
           render renderable
           return
@@ -121,10 +120,7 @@ module QuirkyApi
         options[:paginated_meta] = {paginated_meta: paginated_meta} unless paginated_meta.empty?
       end
 
-      data = prepare_data(data, options)
-
-      renderable = { json: data }
-      renderable[:status] = options[:status] if options[:status].present?
+      renderable = prepare_response(data, options)
 
       render renderable
     end
@@ -134,6 +130,71 @@ module QuirkyApi
     end
 
     protected
+
+
+    def append_meta(data, options = {})
+      # Allow the envelope to be configurable from within the options.
+      # +options+ here are passed all the way from +respond_with+, so you can
+      # specify the envelope in your endpoint, for example:
+      #
+      # @example
+      #   respond_with User.last, envelope: 'user'
+      #
+      @api_response_envelope ||= options[:envelope]
+
+      # Because JSONP responses wrap the response within a function, we append
+      # extra meta information to the response so we get essentially the same
+      # results as if we made a request with AJAX or something.  JSONP
+      # responses *must* be wrapped in an envelope so that the meta information
+      # can be passed forward.
+      #
+      # Using JSONP means that the response will always return 200 (OK), and
+      # you should use the meta 'status' attribute to retrieve the actual
+      # status code.
+      callback = params[:callback].presence || options[:callback]
+      if QuirkyApi.jsonp? && callback.present?
+        # JSONP responses must be wrapped in an envelope so there can be meta information.
+        @api_response_envelope = 'data' if @api_response_envelope.blank?
+        (options[:elements] ||= {}).merge!(meta: { status: options[:status].presence || 200 })
+      end
+
+      # Envelope the data, if applicable.  In the event of a JSONP response,
+      # the data will always be enveloped.
+      data = envelope(data)
+
+      # Further changes would be impossible if the data was not already a hash.
+      return data unless data.is_a?(Hash)
+
+      # Check for warnings if applicable.
+      if QuirkyApi.warn_invalid_fields
+        if @serialized_data.present?
+          warnings = @serialized_data.warnings(params)
+          data[:warnings] = warnings if warnings.present?
+        end
+      end
+
+      data.merge!(options[:elements]) if options[:elements].present?
+      data.merge!(options[:paginated_meta]) if options[:paginated_meta].present?
+
+      data
+    end
+
+    def build_json_response(data, options = {})
+      renderable = { json: data }
+
+      # As described above, if this is a JSONP response, we respond 200 (OK)
+      # and specify the callback to +render+.  Otherwise, we use the default
+      # status code.
+      callback = params[:callback].presence || options[:callback]
+      if QuirkyApi.jsonp? && callback.present?
+        renderable[:callback] = callback
+        renderable[:status] = 200
+      else
+        renderable[:status] = options[:status] if options[:status].present?
+      end
+
+      renderable
+    end
 
     # <tt>prepare_data</tt> is the final step before objects are displayed as
     # JSON in the API.  This method will append warnings, elements and
@@ -153,25 +214,10 @@ module QuirkyApi
     # Both warnings and elements will *only* show up if the response is a hash.
     # They do not know how to react if the response is an array (e.g., if there
     # is no 'envelope' configured.)
-    def prepare_data(data, options)
-      data = envelope(data)
-      return data unless data.is_a?(Hash)
-
-      # Check for warnings if applicable.
-      if QuirkyApi.warn_invalid_fields
-        if @serialized_data.present?
-          warnings = @serialized_data.warnings(params)
-          data[:warnings] = warnings if warnings.present?
-        end
-      end
-
-      data.merge!(options[:elements]) if options[:elements].present?
-      data.merge!(options[:paginated_meta]) if options[:paginated_meta].present?
-
-      # Pretty printing is enabled by default.
-      data = JSON.pretty_generate(data) if QuirkyApi.pretty_print?
-
-      data
+    #
+    def prepare_response(data, options = {})
+      data = append_meta(data, options)
+      build_json_response(data, options)
     end
 
     private

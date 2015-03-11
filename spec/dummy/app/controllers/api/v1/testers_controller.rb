@@ -76,4 +76,8 @@ class Api::V1::TestersController < QuirkyApi::Base
   def as_str
     respond_with 'one'
   end
+
+  def with_callback
+    respond_with 'hello', callback: 'test'
+  end
 end

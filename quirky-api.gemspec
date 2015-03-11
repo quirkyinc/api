@@ -13,8 +13,8 @@ Gem::Specification.new do |s|
   s.email       = ['platform@quirky.com', 'mchittenden@quirky.com']
   s.homepage    = 'https://www.quirky.com'
   s.summary     = 'Quirky API is a set of tools to improve API responses.'
-  s.description = 'Quirky API gem is a slew of tools used to maintain API ' \
-                  'response unit across Quirky services.'
+  s.description = 'Quirky API gem is a set of tools used to maintain API ' \
+                  'response unity across Quirky services.'
 
   s.files = Dir['{app,config,db,lib}/**/*', 'Rakefile', 'README.rdoc']
 
@@ -30,4 +30,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec-rails'
   s.add_development_dependency 'capybara'
   s.add_development_dependency 'factory_girl_rails'
+  s.add_development_dependency 'pry-byebug'
 end

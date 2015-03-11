@@ -178,7 +178,7 @@ module QuirkyApi
       # @param status [Fixnum] The status code to return.  Default is 400.
       #
       def error_response(msg, status = 400)
-        render json: { errors: msg }, status: status
+        render prepare_response(msg, envelope: 'errors', status: status)
       end
 
       # Return an error with a status code.
