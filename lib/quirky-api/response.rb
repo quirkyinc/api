@@ -169,7 +169,7 @@ module QuirkyApi
       # @example
       #   respond_with User.last, envelope: 'user'
       #
-      @api_response_envelope ||= options[:envelope]
+      @api_response_envelope = options[:envelope] if options[:envelope].present?
 
       # Because JSONP responses wrap the response within a function, we append
       # extra meta information to the response so we get essentially the same
