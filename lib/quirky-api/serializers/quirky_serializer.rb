@@ -487,9 +487,9 @@ class QuirkySerializer < ::ActiveModel::Serializer
     end
 
     response = if respond_to?(field)
-                 send(field) if validates?(field)
+                 send(field)
                elsif object.respond_to?(field)
-                 object.send(field) if validates?(field)
+                 object.send(field)
                else
                  fail InvalidField, "#{field} could not be found"
                end
@@ -526,12 +526,14 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @return [Hash] A hash of key / value pairs.
   def filter_attributes(attrs)
     attributes = attrs.each_with_object({}) do |name, inst|
+      next unless validates?(name)
       inst[name] = get_field(name)
     end
 
     optional_fields = _optional
     if optional_fields.present?
       optional_fields.each do |field|
+        next unless validates?(field)
         attributes[field] = get_field(field)
       end
     end
@@ -539,6 +541,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     associated_fields = _associations
     if associated_fields.present?
       associated_fields.each do |assoc|
+        next unless validates?(assoc)
         attributes[assoc] = get_association(assoc)
       end
     end

@@ -80,4 +80,8 @@ class Api::V1::TestersController < QuirkyApi::Base
   def with_callback
     respond_with 'hello', callback: 'test'
   end
+
+  def with_bad_verify_perms
+    respond_with Post.last
+  end
 end

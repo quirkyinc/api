@@ -224,6 +224,25 @@ describe Api::V1::TestersController, type: :controller do
     end
   end
 
+  describe 'GET #with_bad_verify_perms' do
+    let!(:post) { FactoryGirl.create(:post) }
+    before do
+      allow_any_instance_of(PostSerializer)
+        .to receive(:validates?)
+        .and_call_original
+
+      allow_any_instance_of(PostSerializer)
+        .to receive(:validates?)
+        .with(:title)
+        .and_return(false)
+    end
+
+    it 'returns everything but the title attribute' do
+      get :with_bad_verify_perms
+      expect(response.body).to eq({ id: post.id, blurb: post.blurb }.to_json)
+    end
+  end
+
   describe 'GET #with_cache_serialized' do
     before { @tester = FactoryGirl.create(:tester, name: 'Tester', last_name: 'Atqu') }
     it 'caches a response' do

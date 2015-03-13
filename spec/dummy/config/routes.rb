@@ -23,6 +23,7 @@ Dummy::Application.routes.draw do
           get 'with_arr_elements'
           get 'with_cache_serialized'
           get 'with_callback'
+          get 'with_bad_verify_perms'
         end
       end
 
