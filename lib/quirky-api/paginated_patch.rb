@@ -97,9 +97,9 @@ module Paginated
       if paginated_options[:order_column].present?
         raise Paginated::InvalidPaginationOptions, "can not sort by '#{paginated_options[:order_column]}' as such attribute or store accessor does not exist" unless model_attributes.include?(paginated_options[:order_column].to_s)
 
-        # Raise error if :order_column is not float, integer or date_time column, as we can not sort by it
+        # Raise error if we are using cursor pagination and :order_column is not float, integer or date_time column, as we can not sort by it
         # Excluding psql store columns, as their type is determined by the validations, and we can not automatically infer it
-        unless self.base_class.stored_attributes.values.include?(paginated_options[:order_column])
+        if paginated_options[:use_cursor] && !self.base_class.stored_attributes.values.include?(paginated_options[:order_column])
           allowed_types = [:integer, :float, :datetime]
           requested_column_type = self.base_class.columns_hash[paginated_options[:order_column].to_s].type
           unless allowed_types.include?(requested_column_type)
