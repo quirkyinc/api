@@ -88,7 +88,7 @@ describe Invention do
           page: 1,
           per_page: 20
         }
-        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('id ASC').limit(20).offset(0)
+        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('inventions.id ASC').limit(20).offset(0)
       end
 
       it "orders ASC or DESC as specified in :order" do
@@ -97,14 +97,14 @@ describe Invention do
           per_page: 10,
           order: 'ASC'
         }
-        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('id ASC').limit(10).offset(0)
+        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('inventions.id ASC').limit(10).offset(0)
 
         paginated_options = {
           page: 1,
           per_page: 10,
           order: 'DESC'
         }
-        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('id DESC').limit(10).offset(0)
+        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('inventions.id DESC').limit(10).offset(0)
       end
 
       it "orders by the columns specified in :order_column" do
@@ -118,7 +118,7 @@ describe Invention do
           per_page: 50,
           order_column: 'creator_id'
         }
-        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('creator_id ASC').limit(50).offset(0)
+        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('inventions.creator_id ASC').limit(50).offset(0)
       end
 
       it "limits by the :per_page specified" do
@@ -127,7 +127,7 @@ describe Invention do
           page: 1,
           per_page: limit
         }
-        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('id ASC').limit(limit).offset(0)
+        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('inventions.id ASC').limit(limit).offset(0)
       end
     end
 
@@ -213,7 +213,7 @@ describe Invention do
           per_page: 20
         }
         offset = (page - 1) * 20
-        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('id ASC').limit(20).offset(offset)
+        expect(Invention.all.paginated(paginated_options)).to eq Invention.all.order('inventions.id ASC').limit(20).offset(offset)
       end
 
       it "it sets page to 1 if not doing cursor pagination and not sending page" do

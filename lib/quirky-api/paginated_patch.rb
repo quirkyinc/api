@@ -215,7 +215,7 @@ module Paginated
 
       # Join the conditions and get the correctly scoped objects
       conditions_compiled = [conditions.join(' AND '), *condition_params]
-      scoped = self.where(conditions_compiled).order("#{paginated_options[:order_column]} #{paginated_options[:order]}")
+      scoped = self.where(conditions_compiled).order("#{sql_base_class}.#{paginated_options[:order_column]} #{paginated_options[:order]}")
 
       if paginated_options[:use_cursor]
         # Store has_next_page on the relationship as paginated_meta if we are doing cursor pagination
