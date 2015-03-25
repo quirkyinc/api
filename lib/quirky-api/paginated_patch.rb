@@ -220,8 +220,9 @@ module Paginated
       if paginated_options[:use_cursor]
         # Store has_next_page on the relationship as paginated_meta if we are doing cursor pagination
         # As we are doing cursor pagination, the scoped is already bigger or smaller than the cursor (offset is 0 for the query)
-        # We offset by the page we are fetching, and check if there are more models
-        has_next_page = scoped.offset(paginated_options[:per_page]).count > 0
+        # We can not test it by offset and count, because if the scoped has .includes - this will fail
+        # We therefore check the total count against what we are showing
+        has_next_page = (scoped.count - paginated_options[:per_page]) > 0
         scoped.send(:paginated_meta=, {has_next_page: has_next_page})
       else
         # Store the total number of pages on the relationship as paginated_meta if we doing page pagination
@@ -236,7 +237,7 @@ module Paginated
       end
 
       # Return the right page with offset and limit
-     scoped.limit(paginated_options[:per_page]).offset(offset)
+      scoped.limit(paginated_options[:per_page]).offset(offset)
     end
 
     # Getter for paginated_meta
