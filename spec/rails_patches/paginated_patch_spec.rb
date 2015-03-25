@@ -62,13 +62,23 @@ describe Invention do
         expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "can not sort by 'no_such_column' as such attribute or store accessor does not exist"
       end
 
-      it "raises an error if the order_column is not float, integer or date_time type" do
+      it "raises an error if the order_column is not float, integer or date_time type and using cursor pagination" do
+        paginated_options = {
+          per_page: 10,
+          order_column: 'title',
+          use_cursor: true
+        }
+        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "can not order by column of type 'string'"
+      end
+
+      it "does not raise an error if using page pagination and a non-numeric order_column" do
         paginated_options = {
           page: 1,
           per_page: 10,
-          order_column: 'title'
+          order_column: 'title',
+          use_cursor: false
         }
-        expect{Invention.all.paginated(paginated_options)}.to raise_error Paginated::InvalidPaginationOptions,  "can not order by column of type 'string'"
+        expect{Invention.all.paginated(paginated_options)}.not_to raise_error
       end
     end
 
