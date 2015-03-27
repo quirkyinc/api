@@ -227,10 +227,14 @@ module Paginated
       else
         # Store the total number of pages on the relationship as paginated_meta if we doing page pagination
         total_objects = scoped.count
+        total_pages = total_objects.to_f / paginated_options[:per_page]
+        total_pages += 1 if total_objects.to_f % paginated_options[:per_page] > 0
         paginated_meta =  {
-          :total => total_objects,
-          :page => paginated_options[:page],
-          :per_page => paginated_options[:per_page]
+          total: total_objects,
+          page: paginated_options[:page],
+          per_page: paginated_options[:per_page],
+          total_pages: total_pages.to_i,
+          has_next_page: paginated_options[:page] < total_pages.to_i
         }
         scoped.send(:paginated_meta=, paginated_meta)
       end

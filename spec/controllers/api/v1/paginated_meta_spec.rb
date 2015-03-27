@@ -28,6 +28,27 @@ RSpec.describe TestApiController, :type => :controller do
         expect(JSON.parse(response.body)['paginated_meta']['inventions']['total']).to eq 100
         expect(JSON.parse(response.body)['paginated_meta']['inventions']['page']).to eq 1
         expect(JSON.parse(response.body)['paginated_meta']['inventions']['per_page']).to eq 8
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['total_pages']).to eq 13
+      end
+
+      it "adds the pagination_meta with has_next_page to the response when there is a next page" do
+        get :index,
+            format: :json,
+            paginated_options: {inventions: {page: 9, per_page: 10}}
+
+        expect(response.status).to eq 200
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['total_pages']).to eq 10
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['has_next_page']).to eq true
+      end
+
+      it "adds the pagination_meta with has_next_page to the response when there is no next page" do
+        get :index,
+            format: :json,
+            paginated_options: {inventions: {page: 10, per_page: 10}}
+
+        expect(response.status).to eq 200
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['total_pages']).to eq 10
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['has_next_page']).to eq false
       end
     end
 
