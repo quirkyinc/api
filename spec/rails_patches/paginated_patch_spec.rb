@@ -138,7 +138,7 @@ describe Invention do
       end
 
       context "has_next_page" do
-        it "cursor pagination: sets the correct has_next_page in pagination_meta on the ActiveRecord::Relation" do
+        it "cursor pagination: sets the correct has_next_page in paginated_meta on the ActiveRecord::Relation" do
           id = Invention.order('inventions.id ASC').pluck(:id)[Invention.count - 5]
           paginated_options = {
             use_cursor: true,
@@ -158,49 +158,55 @@ describe Invention do
           expect(inventions.paginated_meta[:has_next_page]).to eq false
         end
 
-        it "page pagination: sets the correct has_next_page in pagination_meta on the ActiveRecord::Relation" do
+        it "page pagination: does not set has_next_page in paginated_meta on the ActiveRecord::Relation" do
           paginated_options = {
-            page: 9,
-            per_page: 10
+            page: 2,
+            per_page: 8
           }
           inventions = Invention.all.paginated(paginated_options)
-          expect(inventions.paginated_meta[:has_next_page]).to eq true
-
-          paginated_options = {
-            page: 10,
-            per_page: 10
-          }
-          inventions = Invention.all.paginated(paginated_options)
-          expect(inventions.paginated_meta[:has_next_page]).to eq false
+          expect(inventions.paginated_meta[:has_next_page]).to be_nil
         end
       end
 
-      context "total_pages - for page pagination" do
-        it "sets the correct total_pages in pagination_meta on the ActiveRecord::Relation if it is an exact number" do
+      context "total - for page pagination" do
+        it "sets the total record count in paginated_meta on the ActiveRecord::Relation" do
           paginated_options = {
             page: 2,
             per_page: 5
           }
           inventions = Invention.all.paginated(paginated_options)
-          expect(inventions.paginated_meta[:total_pages]).to eq 20
+          expect(inventions.paginated_meta[:total]).to eq 100
         end
 
-        it "sets the correct total_pages in pagination_meta on the ActiveRecord::Relation if the last page is less than full" do
-          paginated_options = {
-            page: 2,
-            per_page: 8
-          }
-          inventions = Invention.all.paginated(paginated_options)
-          expect(inventions.paginated_meta[:total_pages]).to eq 13
-        end
-
-        it "does not store total_pages for cursor pagination" do
+        it "does not set total record count in paginated_meta on cursor pagination" do
           paginated_options = {
             use_cursor: true,
             per_page: 8
           }
           inventions = Invention.all.paginated(paginated_options)
-          expect(inventions.paginated_meta[:total_pages]).not_to be
+          expect(inventions.paginated_meta[:total]).to be_nil
+        end
+      end
+
+      context "page and per_page - for page pagination" do
+        it "forwards the requested page and per_page values in paginated_meta" do
+          paginated_options = {
+            page: 2,
+            per_page: 16
+          }
+          inventions = Invention.all.paginated(paginated_options)
+          expect(inventions.paginated_meta[:page]).to eq 2
+          expect(inventions.paginated_meta[:per_page]).to eq 16
+        end
+
+        it "does not forward page and per_page values for cursor pagination" do
+          paginated_options = {
+            use_cursor: true,
+            per_page: 23
+          }
+          inventions = Invention.all.paginated(paginated_options)
+          expect(inventions.paginated_meta[:page]).to be_nil
+          expect(inventions.paginated_meta[:per_page]).to be_nil
         end
       end
     end
