@@ -25,6 +25,9 @@ RSpec.describe TestApiController, :type => :controller do
             paginated_options: {inventions: {per_page: 8}}
 
         expect(response.status).to eq 200
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['total']).to eq 100
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['page']).to eq 1
+        expect(JSON.parse(response.body)['paginated_meta']['inventions']['per_page']).to eq 8
         expect(JSON.parse(response.body)['paginated_meta']['inventions']['total_pages']).to eq 13
       end
 
