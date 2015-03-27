@@ -230,8 +230,9 @@ module Paginated
         total_pages = total_objects.to_f / paginated_options[:per_page]
         total_pages += 1 if total_objects.to_f % paginated_options[:per_page] > 0
         paginated_meta =  {
-          :total_pages => total_pages.to_i,
-          :has_next_page => paginated_options[:page] < total_pages.to_i
+          :total => total_objects,
+          :page => paginated_options[:page],
+          :per_page => paginated_options[:per_page]
         }
         scoped.send(:paginated_meta=, paginated_meta)
       end
