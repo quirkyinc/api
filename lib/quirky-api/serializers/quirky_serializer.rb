@@ -90,7 +90,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     # and only showing an attribute's content if the block returns +true+.  If
     # the block does not return +true+, this attribute's value will be +null+.
     #
-    # @param attribute [Symbol] The attribute to run permission checks on.
+    # @param attribute [Symbol or Array] The attribute(s) to run permission checks on.
     # @param validation [Block] A block that will be run to verify that the
     #                           viewing party has permission to see the
     #                           attribute.
@@ -103,15 +103,18 @@ class QuirkySerializer < ::ActiveModel::Serializer
     #
     #   class UserSerializer < QuirkySerializer
     #     attributes :id, :name, :email
-    #     verify_permissions :email do
+    #     verify_permissions [:name, :email] do
     #       @current_user.can? :update, object rescue false
     #     end
     #   end
     #
     # @see validates?
-    def verify_permissions(attribute, validation = nil, &block)
+    def verify_permissions(attributes, validation = nil, &block)
+      attributes = [attributes] if attributes.is_a? Symbol
       self._validations ||= {}
-      self._validations[attribute] = (validation.present? ? validation : block)
+      attributes.each do |attribute|
+        self._validations[attribute] = (validation.present? ? validation : block)
+      end
     end
 
     # This allows you to cache certain fields within a serializer.  The issue
