@@ -110,7 +110,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
     #
     # @see validates?
     def verify_permissions(attributes, validation = nil, &block)
-      attributes = [attributes] if attributes.is_a? Symbol
+      attributes = [attributes] unless attributes.is_a? Array
       self._validations ||= {}
       attributes.each do |attribute|
         self._validations[attribute] = (validation.present? ? validation : block)
