@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 # Exception for associations that are not valid.
-class InvalidAssociation < ::Exception ; end
+InvalidAssociation = Class.new(StandardError)
 
 # Dependencies
 require 'active_model_serializers'
@@ -9,7 +9,6 @@ require 'active_model_serializers'
 # QuirkyAPI methods that are available to the entire app.
 require 'quirky-api/global_methods'
 include QuirkyApi::Global
-
 
 require 'quirky-api/railtie'
 

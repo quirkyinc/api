@@ -449,7 +449,7 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @param [String|Symbol] field  The name of the field to store in cache.
   # @param [Mixed] value  The value of that field.
   def _set_cached_field(field, value)
-    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field] = Rails.cache.fetch([object, field]) { value }
+    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field] = Rails.cache.fetch([object.cache_key, field]) { value }
   end
 
   # Checks whether a certain field is configured to be cached.

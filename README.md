@@ -29,7 +29,7 @@
 
 ## Explanation
 
-The `quirky-api` gem provides a library of useful tools and methods to help make API development easier. 
+The `quirky-api` gem provides a library of useful tools and methods to help make API development easier.
 
 All functionality is automatically included by adding `quirky-api` to your Gemfile:
 
@@ -404,7 +404,7 @@ Caching is a very complicated topic in serialization, given serialized data ofte
 `caches` works by rendering an object, and along the way caching every single attribute on that object (instead of the entire object at once).  This makes processing significantly faster on subsequent serialization.  The caching works like this:
 
 ```ruby
-Rails.cache.fetch [object, field] do
+Rails.cache.fetch [object.cache_key, field] do
   get_value(field)
 end
 ```
