@@ -441,7 +441,8 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @param [String|Symbol] field  The field to retrieve from cache.
   # @return [Mixed] The returned value.
   def _cached_field(field)
-    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field]
+    cached_obj = self.class._cache["#{object.id}.#{object.updated_at.to_i}"] || {}
+    cached_obj[field]
   end
 
   # Stores a +field+'s +value+ in cache.
@@ -449,7 +450,8 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @param [String|Symbol] field  The name of the field to store in cache.
   # @param [Mixed] value  The value of that field.
   def _set_cached_field(field, value)
-    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field] = Rails.cache.fetch([object.cache_key, field]) { value }
+    cached_obj = self.class._cache["#{object.id}.#{object.updated_at.to_i}"] || {}
+    cached_obj[field] = Rails.cache.fetch([object.cache_key, field]) { value }
   end
 
   # Checks whether a certain field is configured to be cached.
@@ -467,7 +469,8 @@ class QuirkySerializer < ::ActiveModel::Serializer
   # @return [Boolean]
   def _in_cache?(field)
     return false if self.class._cache.blank?
-    self.class._cache["#{object.id}.#{object.updated_at.to_i}"][field].present?
+    cached_obj = self.class._cache["#{object.id}.#{object.updated_at.to_i}"]
+    cached_obj.present? && cached_obj[field].present?
   end
 
   # Attempts to get the value of a certain field by first checking the
