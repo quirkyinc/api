@@ -165,7 +165,7 @@ module QuirkyApi
                            end
 
                            str += error
-                           str.capitalize
+                           (str.slice(0) || '').upcase + (str.slice(1..-1) || '')
                          end
 
           (hsh[key] ||= []) << full_message
