@@ -14,7 +14,6 @@ module QuirkyApi
   #  end
   class Base < ActionController::Metal
     require 'new_relic/agent/instrumentation/rack' if defined?(::NewRelic)
-    require 'will_paginate'
 
     # Core Rails functionality.
     include AbstractController::Rendering

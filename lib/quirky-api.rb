@@ -26,9 +26,9 @@ module QuirkyApi
   require 'quirky-api/response'
   require 'quirky-api/can'
   require 'quirky-api/controller'
+  require 'quirky-api/paginate'
 
   # Serializers
   require 'quirky-api/serializers/quirky_serializer'
   require 'quirky-api/serializers/quirky_array_serializer'
-  require 'quirky-api/paginated_patch'
 end

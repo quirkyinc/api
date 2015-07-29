@@ -1,13 +1,11 @@
 # encoding: utf-8
 
 require 'quirky-api/response/errors'
-require 'quirky-api/response/pagination'
 
 module QuirkyApi
   # The response module handles response and status code methods for the API.
   module Response
     include Errors
-    include Pagination
 
     # Returns a JSON response for the API.
     #
@@ -40,8 +38,10 @@ module QuirkyApi
     #           "last": "Sea"
     #         }
     #     }
-    def respond_with(response, options = {}, &block)
+    def respond_with(response, options = nil, &block)
       return if @performed_render
+
+      options = Hash.new { |h,k| h[k] = {} }.merge!(options)
 
       @api_response_envelope = if options.key?(:envelope)
                                  options[:envelope]
@@ -109,15 +109,9 @@ module QuirkyApi
                response
              end
 
-      # Append paginated_meta to the response if any response objects has it
-      if response.respond_to?(:each) && response.is_a?(Hash)
-        paginated_meta = {}
-        response.each do |key, value|
-          if value.respond_to?(:paginated_meta) && value.paginated_meta.present?
-            paginated_meta[key] = value.paginated_meta
-          end
-        end
-        options[:paginated_meta] = {paginated_meta: paginated_meta} unless paginated_meta.empty?
+      # Append paginated_metadata to the response if any response object has it
+      if response.respond_to?(:paginated_metadata) && response.paginated_metadata.present?
+        options[:metadata].merge!(response.paginated_metadata)
       end
 
       renderable = prepare_response(data, options)
@@ -209,7 +203,7 @@ module QuirkyApi
 
       # Paginated meta is information returned from our custom implementation
       # of pagination.
-      data.merge!(options[:paginated_meta]) if options[:paginated_meta].present?
+      data.merge!({ metadata: options[:metadata] }) if options[:metadata].present?
 
       # If configured, we pretty JSON responses.  This is the default response.
       data = JSON.pretty_generate(data) if QuirkyApi.pretty_print?

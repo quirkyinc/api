@@ -4,5 +4,11 @@ module QuirkyApi
       # Ensure that GZIP is used at the very least for the API.
       app.config.middleware.use Rack::Deflater
     end
+
+    initializer 'quirky_api' do |app|
+      ActiveSupport.on_load(:active_record) do
+        ::ActiveRecord::Base.send :include, QuirkyApi::Paginate::ActiveRecordExtension
+      end
+    end
   end
 end
