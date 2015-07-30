@@ -47,6 +47,12 @@ module QuirkyApi
       # Fallback to default envelope unless we set one on the options.
       options[:envelope] = QuirkyApi.envelope unless options.key?(:envelope)
 
+      # Include params in all options sent forth to serializers.
+      options[:params] = params
+
+      # Allow us to configure headers in response.
+      options[:headers] = headers
+
       if block_given?
         options = response
 
@@ -87,12 +93,6 @@ module QuirkyApi
 
       # If our response variable is nil, just return a null value to save time.
       return render(prepare_response(nil, options)) if response.nil?
-
-      # Include params in all options sent forth to serializers.
-      options[:params] = params
-
-      # Allow us to configure headers in response.
-      options[:headers] = headers
 
       # If there's an active model serializer to speak of, use it.
       # Otherwise, just render what we've got.

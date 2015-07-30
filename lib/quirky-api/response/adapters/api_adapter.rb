@@ -34,7 +34,7 @@ class ApiAdapter
 
   def initialize(data, options)
     @data = data
-    @headers = options.fetch(:headers)
+    @headers = options.fetch(:headers, {})
     @options = options
   end
 
