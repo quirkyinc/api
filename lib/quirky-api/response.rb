@@ -195,8 +195,8 @@ module QuirkyApi
       @response_adapter.finalize!(json: data)
     end
 
-    # <tt>prepare_data</tt> is the final step before objects are displayed as
-    # JSON in the API.  This method will append warnings, elements and
+    # <tt>prepare_response</tt> is the final step before objects are displayed
+    # as JSON in the API.  This method will append warnings, elements and
     # paginated_data to the response if possible, and 'prettify' the JSON
     # output if configured.
     #
@@ -217,18 +217,6 @@ module QuirkyApi
     def prepare_response(data, options = {})
       data = append_meta(data, options)
       build_json_response(data, options)
-    end
-
-    private
-
-    # Envelopes data based on +QuirkyApi.envelope+.
-    #
-    # @param data [Object] Any type of object.
-    #
-    # @return [Hash] The enveloped data, if applicable.
-    def envelope(data)
-      return data if options.blank?
-      { options.to_s => data }
     end
   end
 end

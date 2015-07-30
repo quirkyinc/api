@@ -52,23 +52,28 @@ module QuirkyApi
         @adapters
       end
 
+      # Use a new +adapter+.  This will place your adapter just before the
+      # EnvelopeAdapter, which makes a noticable change by wrapping your data
+      # with a key.
       def use(new_adapter)
         insert_before EnvelopeAdapter, new_adapter
       end
 
+      # Insert your +new_adapter+ just before +adapter+ in the adapter order.
       def insert_before(adapter, new_adapter)
         @adapters << {
-          position: adapter,
-          operation: '-1',
-          adapter: new_adapter
+          adapter: adapter,
+          placement: '-1',
+          new_adapter: new_adapter
         }
       end
 
+      # Inser your +new_adapter+ just after +adapter+ in the adapter order.
       def insert_after(adapter, new_adapter)
         @adapters << {
-          position: adapter,
-          operation: '+1',
-          adapter: new_adapter
+          adapter: adapter,
+          placement: '+1',
+          new_adapter: new_adapter
         }
       end
     end
