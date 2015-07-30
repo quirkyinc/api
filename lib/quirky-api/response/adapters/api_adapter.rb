@@ -30,10 +30,11 @@
 #   end
 #
 class ApiAdapter
-  attr_accessor :data, :options
+  attr_accessor :data, :headers, :options
 
   def initialize(data, options)
     @data = data
+    @headers = options.fetch(:headers)
     @options = options
   end
 

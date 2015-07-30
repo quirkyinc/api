@@ -91,6 +91,9 @@ module QuirkyApi
       # Include params in all options sent forth to serializers.
       options[:params] = params
 
+      # Allow us to configure headers in response.
+      options[:headers] = headers
+
       # If there's an active model serializer to speak of, use it.
       # Otherwise, just render what we've got.
       data = if response.respond_to?(:active_model_serializer) &&
