@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
   s.summary     = 'Quirky API is a set of tools to improve API responses.'
   s.description = 'Quirky API gem is a set of tools used to maintain API ' \
                   'response unity across Quirky services.'
+  s.license     = 'MIT'
 
   s.files = Dir['{app,config,db,lib}/**/*', 'Rakefile', 'README.rdoc']
 
